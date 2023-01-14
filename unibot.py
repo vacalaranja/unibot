@@ -14,7 +14,7 @@ from random import random, choice
 from web3 import Web3, IPCProvider
 from ens import ENS
 
-override_addresses = {
+OVERRIDE_ADDRESSES = {
   "0xB3A533098485bede3Cb7fA8711AF84FE0bb1e0aD": "oDAO nimbus",
   "0xCCbFF44E0f0329527feB0167bC8744d7D5aEd3e9": "oDAO rocketpool-2",
   "0xAf820bb236FdE6f084641c74a4C62fA61D10b293": "oDAO etherscan",
@@ -47,14 +47,9 @@ override_addresses = {
   "0x75C8F18e401113167A43bB21556cc132BF8C7ca9": "onethousand.eth"
 }
 n = {}
-for k in override_addresses:
-    n[k.lower()] = override_addresses[k]
-override_addresses.update(n)
-
-infura_url = "https://mainnet.infura.io/v3/6b3556d0d5d14ef5ad4f8807aaaae134"
-
-web3 = Web3(Web3.HTTPProvider(infura_url))
-ns = ENS.fromWeb3(web3)
+for k in OVERRIDE_ADDRESSES:
+    n[k.lower()] = OVERRIDE_ADDRESSES[k]
+OVERRIDE_ADDRESSES.update(n)
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -73,11 +68,15 @@ DUST = 0.01
 ethscan_api_key = os.getenv('ETH_TOKEN')
 discord_bot_key = os.getenv('TOKEN')
 dex_api_key = os.getenv('DEX')
+infura_url = os.getenv('INFURA')
 openexchange_api_key = os.getenv('OPENEXCHANGE')
 
+web3 = Web3(Web3.HTTPProvider(infura_url))
+ns = ENS.fromWeb3(web3)
+
 def ens_resolve(address):
-    if address in override_addresses:
-        return override_addresses[address]
+    if address in OVERRIDE_ADDRESSES:
+        return OVERRIDE_ADDRESSES[address]
     try:
         name = ns.name(address)
         forward = ns.address(name)
@@ -117,7 +116,7 @@ class Unibot(commands.Cog):
         self.latest_ratio = self.get_ratio(self.new_rpl_address)
         self.latest_eth_price = self.get_usdc_price(WETH_ADDRESS)
         self.latest_reth_ratio = self.get_ratio(RETH_ADDRESS)
-        self.get_eur()
+        self.request_eur()
         self.last_updated = int(datetime.now().timestamp())
         for embed in self.get_kraken_swaps():
             pass
@@ -148,10 +147,6 @@ class Unibot(commands.Cog):
         #print(price)
         return price
 
-    def get_eur(self):
-        with open('eur.txt') as f:
-            self.latest_eur = float(f.read().strip())
-
     def request_eur(self):
         url = 'https://openexchangerates.org/api/latest.json'
         params = {'app_id':openexchange_api_key, 'symbols':'EUR', 'base':'USD', 'prettyprint':False}
@@ -159,8 +154,7 @@ class Unibot(commands.Cog):
         try:
             d = json.loads(r.text)
             self.latest_eur = float(d['rates']['EUR'])
-            f.write(str(self.latest_eur))
-            print('eur updated')
+            #print('eur updated')
         except:
             print('error getting EUR rate')
             raise
@@ -293,11 +287,10 @@ class Unibot(commands.Cog):
             return
         title = 'Coinbase'
         if data['New-RPL'] > 0:
-            color = discord.Color.green()
             title += ' buys'
         else:
-            color = discord.Color.red()
             title += ' sells'
+        color = discord.Color.purple()
         embed = discord.Embed(title=title, description='1h summary', color=color)
         embed.add_field(name='Time', value=f'{data["Time"]}')
         embed.add_field(name='New-RPL', value=f'{data["New-RPL"]:,.2f}')
@@ -404,11 +397,10 @@ class Unibot(commands.Cog):
                 return
             title = 'Kraken'
             if data['New-RPL'] > 0:
-                color = discord.Color.green()
                 title += ' buys'
             else:
-                color = discord.Color.red()
                 title += ' sells'
+            color = discord.Color.purple()
             embed = discord.Embed(title=title, description='1h summary', color=color)
             #embed.add_field(name='RPL', value=f'{swap["New-RPL"]:,.2f}')
             for value in data:
@@ -506,7 +498,7 @@ class Unibot(commands.Cog):
 #                print(f'skiping swap: {swap}')
                 continue
             if abs(swap['WETH']) < DUST and abs(swap['New-RPL']) > DUST and abs(swap['Old-RPL']) > DUST:
-                grouped[tx]['color'] = discord.Color.purple()
+                grouped[tx]['color'] = discord.Color.blue()
                 if swap['New-RPL'] > 0:
                     grouped[tx]['title'] = 'Old > New RPL'
                 else:
@@ -691,7 +683,7 @@ class Unibot(commands.Cog):
         keys = {'a':'Ask', 'b':'Bid', 'c':'Close', 'v':'Volume', 'p':'Volume weighted average price',
                 't':'Trades', 'l':'Low', 'h':'High', 'o':"Today's opening price"}
         title = '24h Kraken RPL stats'
-        embed = discord.Embed(title=title, description=f'',color=discord.Color.purple())
+        embed = discord.Embed(title=title, description=f'',color=discord.Color.blue())
         for k in keys:
             if k in 'vp':
                 embed.add_field(name=keys[k], value=f'USD: {float(result[0][k][1]):,.2f}\nEUR: {float(result[1][k][1]):,.2f}', inline=False)
