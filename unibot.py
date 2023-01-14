@@ -114,8 +114,8 @@ class Unibot(commands.Cog):
             abi = json.load(f)['result']
         self.oracle = web3.eth.contract(address=PRICE_ORACLE, abi=abi)
         self.latest_ratio = self.get_ratio(self.new_rpl_address)
-        self.latest_eth_price = self.get_usdc_price(WETH_ADDRESS)
-        self.latest_reth_ratio = self.get_ratio(RETH_ADDRESS)
+        self.latest_eth_price = self.get_usdc_price(self.weth_address)
+        self.latest_reth_ratio = self.get_ratio(self.reth_address)
         self.request_eur()
         self.last_updated = int(datetime.now().timestamp())
         for embed in self.get_kraken_swaps():
@@ -135,14 +135,18 @@ class Unibot(commands.Cog):
         r = requests.get(url, params=params)
         try:
             d = json.loads(r.text)
+            return float(d['toTokenAmount'])/float(d['fromTokenAmount'])
             #print(d)
         except:
-            return None
-        return float(d['toTokenAmount'])/float(d['fromTokenAmount'])
+            #try backup oracle
+            to_address = Web3.toChecksumAddress(to_address)
+            address = Web3.toChecksumAddress(address)
+            ratio = self.oracle.functions.getRate(Web3.toChecksumAddress(address), to_address, False).call()
+            ratio = ratio / 10**18
+            return ratio
 
     def get_usdc_price(self, address):
-        usdc_address = Web3.toChecksumAddress(USDC_ADDRESS)
-        price = self.get_ratio(address, usdc_address)
+        price = self.get_ratio(address, self.usdc_address)
         price = price * 10**12
         #print(price)
         return price
