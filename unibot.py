@@ -161,7 +161,7 @@ class Unibot(commands.Cog):
             #print('eur updated')
         except:
             print('error getting EUR rate')
-            return 1.08 #reasonable rate
+            self.latest_eur = 1.09 #reasonable rate
 
     @commands.command()
     @commands.is_owner()
