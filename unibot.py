@@ -95,7 +95,7 @@ class Unibot(commands.Cog):
         self.ctx = {}
         self.done = []
         self.coinbase_done = []
-        self._cex_time = 3600
+        self._cex_time = 14400
         self.kraken_last = 0
         self.zeroes = 10**18
         self.max_done_cache = 5000
@@ -161,7 +161,7 @@ class Unibot(commands.Cog):
             #print('eur updated')
         except:
             print('error getting EUR rate')
-            self.latest_eur = 1.09 #reasonable rate
+            self.latest_eur = 0.92 #reasonable rate
 
     @commands.command()
     @commands.is_owner()
@@ -295,7 +295,7 @@ class Unibot(commands.Cog):
         else:
             title += ' sells'
         color = discord.Color.purple()
-        embed = discord.Embed(title=title, description='1h summary', color=color)
+        embed = discord.Embed(title=title, description=f'{self._cex_time/60/60}h summary', color=color)
         embed.add_field(name='Time', value=f'{data["Time"]}')
         embed.add_field(name='New-RPL', value=f'{data["New-RPL"]:,.2f}')
         embed.add_field(name='USD value', value=f'{data["USD value"]:,.2f}')
@@ -375,7 +375,7 @@ class Unibot(commands.Cog):
             else:
                 raise 'Order type is missing.'
             if 'EUR' in pair:
-                usd_amount *= self.latest_eur
+                usd_amount /= self.latest_eur
             usd_volume += abs(usd_amount)
             usd_total += usd_amount
             rpl_volume += abs(rpl_amount)
@@ -405,7 +405,7 @@ class Unibot(commands.Cog):
             else:
                 title += ' sells'
             color = discord.Color.purple()
-            embed = discord.Embed(title=title, description='1h summary', color=color)
+            embed = discord.Embed(title=title, description=f'{self._cex_time/60/60}h summary', color=color)
             #embed.add_field(name='RPL', value=f'{swap["New-RPL"]:,.2f}')
             for value in data:
                 if type(data[value]) == bool:
