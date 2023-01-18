@@ -541,7 +541,7 @@ class Unibot(commands.Cog):
             if 'WETH' in grouped[tx]:
                 total_value = abs(grouped[tx]['WETH'] * self.latest_eth_price)
                 grouped[tx]['USD value'] = total_value
-                if 'Sandwich' not in grouped[tx]['title'] and 'Arbitrage' not in grouped[tx]['title']:
+                if 'title' in grouped[tx] and 'Sandwich' not in grouped[tx]['title'] and 'Arbitrage' not in grouped[tx]['title']:
                     if grouped[tx]['USD value'] > 100000:
                         grouped[tx]['title'] = 'Large ' + grouped[tx]['title']
             if grouped[tx]['rETH']:
