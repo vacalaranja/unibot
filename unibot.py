@@ -100,8 +100,9 @@ class Unibot(commands.Cog):
         self.zeroes = 10**18
         self.max_done_cache = 5000
         self.counter = 0
-        self.limit = 20 #number of transactions to pull every loop
-        self.min_rpl = 400 #minimun value of transactions that will be included (updated every tx to 10k USD)
+        self.limit = 50 #number of transactions to pull every loop
+        self.min_rpl = 700 #minimun value of transactions that will be included (updated every 30s to 25k USD)
+        self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
         self.disable = True
         self.rpl_address = TOKEN_ADDRESS
         self.new_rpl_address = NEW_TOKEN_ADDRESS
@@ -498,7 +499,7 @@ class Unibot(commands.Cog):
                 grouped[swap['tx']] = swap
                 grouped[swap['tx']]['total_swapped'] = abs(swap['WETH'])
         for tx, swap in grouped.copy().items():
-            if abs(swap['New-RPL']) < self.min_rpl and abs(swap['Old-RPL']) < self.min_rpl and swap['total_swapped'] < 10:
+            if abs(swap['New-RPL']) < self.min_rpl and abs(swap['Old-RPL']) < self.min_rpl and swap['total_swapped'] < self.min_eth:
 #                print(f'skiping swap: {swap}')
                 continue
             if abs(swap['WETH']) < DUST and abs(swap['New-RPL']) > DUST and abs(swap['Old-RPL']) > DUST:
@@ -615,7 +616,6 @@ class Unibot(commands.Cog):
                     ratio = abs(eth_amount/data['Old-RPL'])
                 if ratio:
                     embed.add_field(name='Ratio', value=f'{ratio:.5f}')
-                self.min_rpl = 10000 / (self.latest_eth_price * self.latest_ratio)
             embed.set_footer(text=f'{_author} {_address}', icon_url=_icon)
             yield embed
 
@@ -627,6 +627,8 @@ class Unibot(commands.Cog):
             self.latest_ratio = self.get_ratio(self.new_rpl_address)
             self.latest_eth_price = self.get_usdc_price(WETH_ADDRESS)
             self.last_updated = int(datetime.now().timestamp())
+            self.min_rpl = 25000 / (self.latest_eth_price * self.latest_ratio)
+            #print(self.min_rpl, self.latest_ratio, self.latest_eth_price)
         if not self.counter % 60: # Get swaps every minute.
             self.latest_reth_ratio = self.get_ratio(RETH_ADDRESS)
             done = True
