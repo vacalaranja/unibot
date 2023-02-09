@@ -65,6 +65,7 @@ RPIT_ADDRESS = '0x21d722c340839751d23a4fb5b6d5e593f8cc82eb'
 USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
 PRICE_ORACLE = '0x07D91f5fb9Bf7798734C3f606dB065549F6893bb'
 DUST = 0.01
+ATH_FILE = os.getenv('ATH_FILE')
 ethscan_api_key = os.getenv('ETH_TOKEN')
 discord_bot_key = os.getenv('TOKEN')
 dex_api_key = os.getenv('DEX')
@@ -103,6 +104,7 @@ class Unibot(commands.Cog):
         self.limit = 50 #number of transactions to pull every loop
         self.min_rpl = 700 #minimun value of transactions that will be included (updated every 30s to 25k USD)
         self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
+        self._ath = self.load_ath()
         self.disable = True
         self.rpl_address = TOKEN_ADDRESS
         self.new_rpl_address = NEW_TOKEN_ADDRESS
@@ -151,6 +153,32 @@ class Unibot(commands.Cog):
         price = price * 10**12
         #print(price)
         return price
+
+    def load_ath(self):
+        with open(ATH_FILE) as f:
+            return(float(f.read().strip()))
+
+    def save_ath(self):
+        with open(ATH_FILE, 'w') as f:
+            f.write(str(self._ath))
+
+    @commands.command()
+    async def ath(self, ctx, *args):
+        if args and (str(ctx.author) == 'waqwaqattack#7706' or str(ctx.author) == 'vacalaranja#8816'):
+            try:
+                self._ath = float(args[0])
+                self.save_ath()
+                embed = discord.Embed(title='New ATH', description='', color=discord.Color.from_rgb(255,255,255))
+                embed.add_field(name='New ATH ratio:', value=f'{self._ath}', inline=False)
+                embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
+                return await ctx.send(embed=embed)
+            except:
+                return await ctx.send('Error updating ATH.')
+        else:
+            embed = discord.Embed(title='ATH', description='', color=discord.Color.from_rgb(255,255,255))
+            embed.add_field(name='Current ATH ratio:', value=f'{self._ath}', inline=False)
+            embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
+            return await ctx.send(embed=embed)
 
     def request_eur(self):
         url = 'https://openexchangerates.org/api/latest.json'
@@ -296,7 +324,7 @@ class Unibot(commands.Cog):
         else:
             title += ' sells'
         color = discord.Color.purple()
-        embed = discord.Embed(title=title, description=f'{self._cex_time/60/60}h summary', color=color)
+        embed = discord.Embed(title=title, description=f'{self._cex_time/60/60:.0f}h summary', color=color)
         embed.add_field(name='Time', value=f'{data["Time"]}')
         embed.add_field(name='New-RPL', value=f'{data["New-RPL"]:,.2f}')
         embed.add_field(name='USD value', value=f'{data["USD value"]:,.2f}')
@@ -406,7 +434,7 @@ class Unibot(commands.Cog):
             else:
                 title += ' sells'
             color = discord.Color.purple()
-            embed = discord.Embed(title=title, description=f'{self._cex_time/60/60}h summary', color=color)
+            embed = discord.Embed(title=title, description=f'{self._cex_time/60/60:.0f}h summary', color=color)
             #embed.add_field(name='RPL', value=f'{swap["New-RPL"]:,.2f}')
             for value in data:
                 if type(data[value]) == bool:
@@ -501,7 +529,8 @@ class Unibot(commands.Cog):
         for tx, swap in grouped.copy().items():
             if abs(swap['New-RPL']) < self.min_rpl and abs(swap['Old-RPL']) < self.min_rpl and swap['total_swapped'] < self.min_eth:
 #                print(f'skiping swap: {swap}')
-                continue
+                if 'adada.eth' not in swap['sender']:
+                    continue
             if abs(swap['WETH']) < DUST and abs(swap['New-RPL']) > DUST and abs(swap['Old-RPL']) > DUST:
                 grouped[tx]['color'] = discord.Color.blue()
                 if swap['New-RPL'] > 0:
