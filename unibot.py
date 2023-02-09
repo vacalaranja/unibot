@@ -529,7 +529,7 @@ class Unibot(commands.Cog):
         for tx, swap in grouped.copy().items():
             if abs(swap['New-RPL']) < self.min_rpl and abs(swap['Old-RPL']) < self.min_rpl and swap['total_swapped'] < self.min_eth:
 #                print(f'skiping swap: {swap}')
-                if 'adada.eth' not in swap['sender']:
+                if 'adada.eth' not in swap['Sender']:
                     continue
             if abs(swap['WETH']) < DUST and abs(swap['New-RPL']) > DUST and abs(swap['Old-RPL']) > DUST:
                 grouped[tx]['color'] = discord.Color.blue()
