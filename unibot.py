@@ -927,6 +927,10 @@ class Unibot(commands.Cog):
         return await ctx.send('Hammer time!')
 
     @commands.command()
+    async def leaderboard(self, ctx):
+        return await ctx.send('https://docs.google.com/spreadsheets/d/18T5w_w9uf6eOy5tt3GDNLFjNp7pr__1Z9IaW4RBCAQY/')
+
+    @commands.command()
     async def wen(self, ctx):
         now = datetime.now()
         answers = ['In the not-too-distant future.', 'Yesterday.', 'Tonight.',
