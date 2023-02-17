@@ -160,28 +160,32 @@ class Unibot(commands.Cog):
 
     def save_ath(self):
         with open(ATH_FILE, 'w') as f:
-            f.write(' '.join(self._ath))
+            f.write(' '.join([str(n) for n in self._ath]))
 
     @commands.command()
     async def ath(self, ctx, *args):
         if args and (str(ctx.author) == 'waqwaqattack#7706' or str(ctx.author) == 'vacalaranja#8816'):
             try:
+                new_ath = float(args[0])
                 embed = discord.Embed(title='New ATH', description='', color=discord.Color.from_rgb(255,255,255))
-                if args[0] > 50:
-                    self._ath[1] = float(args[0])
+                if new_ath > 50: # USD
+                    self._ath[1] = new_ath
                     embed.add_field(name='New USD ATH:', value=f'{self._ath[1]}', inline=False)
-                else:
-                    self._ath[0] = float(args[0])
+                else: # Ratio
+                    self._ath[0] = new_ath
                     embed.add_field(name='New ATH ratio:', value=f'{self._ath[0]}', inline=False)
                 self.save_ath()
                 embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
-                return await ctx.send(embed=embed)
+                for ctx in self.ctx.values(): #send to all servers
+                    await ctx.send(embed=embed)
+
             except:
+                raise
                 return await ctx.send('Error updating ATH.')
         else:
             embed = discord.Embed(title='ATH', description='', color=discord.Color.from_rgb(255,255,255))
-            embed.add_field(name='Current ATH ratio:', value=f'{self._ath[0]}')
-            embed.add_field(name='Current USD ATH:', value=f'{self._ath[1]}')
+            embed.add_field(name='Current ATH ratio:', value=f'{self._ath[0]}', inline=False)
+            embed.add_field(name='Current USD ATH:', value=f'{self._ath[1]}', inline=False)
             embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
             return await ctx.send(embed=embed)
 
@@ -669,6 +673,7 @@ class Unibot(commands.Cog):
             self.origins = {}
             self.possible_arbs = {}
             for embed in self.get_swaps():
+                self.send_embed(embed)
                 for ctx in self.ctx.values(): #send to all servers
                     try:
                         await ctx.send(embed=embed)
