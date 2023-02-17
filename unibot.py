@@ -673,7 +673,6 @@ class Unibot(commands.Cog):
             self.origins = {}
             self.possible_arbs = {}
             for embed in self.get_swaps():
-                self.send_embed(embed)
                 for ctx in self.ctx.values(): #send to all servers
                     try:
                         await ctx.send(embed=embed)
