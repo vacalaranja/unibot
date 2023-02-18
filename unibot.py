@@ -265,7 +265,7 @@ class Unibot(commands.Cog):
         try:
             d = json.loads(r.text)
         except:
-            print('error')
+            print('graph query error')
             return None
         #print('data:', d)
         if 'data' in d:
@@ -281,7 +281,7 @@ class Unibot(commands.Cog):
         try:
             d = json.loads(r.text)
         except:
-            print('error')
+            print('coinbase error')
             raise
         #print('data:', d)
        #{'time': '2022-12-08T07:57:33.426465Z', 'trade_id': 395730524, 'price': '1232.66000000', 'size': '0.57613137', 'side': 'buy'}
@@ -350,7 +350,7 @@ class Unibot(commands.Cog):
         try:
             d = json.loads(r.text)
         except:
-            print('error')
+            print('coinbase command error')
             raise
         #print(d)
         #{'open': '1230.88', 'high': '1240.02', 'low': '1215', 'last': '1232.5', 'volume': '251082.75145692', 'volume_30day': '12092500.89993325'}
@@ -377,7 +377,7 @@ class Unibot(commands.Cog):
         try:
             d = json.loads(r.text)
         except:
-            print('error')
+            print('kraken error')
             return None
         #print('data:', d)
         if 'result' not in d:
@@ -721,7 +721,7 @@ class Unibot(commands.Cog):
             try:
                 d = json.loads(r.text)
             except:
-                print('error')
+                print('kraken command error')
                 return None
             try:
                 result.append(d['result'][pair])
@@ -919,7 +919,7 @@ class Unibot(commands.Cog):
         try:
             data = json.loads(r.text)
         except:
-            print('error')
+            print('cowswap error')
 #           print(f'data:{data}')
             return None
         for d in data:
