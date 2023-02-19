@@ -101,7 +101,7 @@ class Unibot(commands.Cog):
         self.zeroes = 10**18
         self.max_done_cache = 5000
         self.counter = 0
-        self.limit = 50 #number of transactions to pull every loop
+        self.limit = 20 #number of transactions to pull every loop
         self.min_rpl = 700 #minimun value of transactions that will be included (updated every 30s to 25k USD)
         self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
         self._ath = self.load_ath()
