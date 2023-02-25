@@ -156,11 +156,15 @@ class Unibot(commands.Cog):
 
     def load_ath(self):
         with open(ATH_FILE) as f:
-            return [float(n) for n in f.read().strip().split()]
+            d = f.readlines()
+            ath, ath_ts = d[0].strip().split()
+            usd_ath, usd_ath_ts = d[1].strip().split()
+            return [[float(ath), int(ath_ts)], [float(usd_ath), int(usd_ath_ts)]]
 
     def save_ath(self):
         with open(ATH_FILE, 'w') as f:
-            f.write(' '.join([str(n) for n in self._ath]))
+            for l in self._ath:
+                f.write(' '.join([str(n) for n in l]) + '\n')
 
     @commands.command()
     async def ath(self, ctx, *args):
@@ -169,11 +173,13 @@ class Unibot(commands.Cog):
                 new_ath = float(args[0])
                 embed = discord.Embed(title='New ATH', description='', color=discord.Color.from_rgb(255,255,255))
                 if new_ath > 50: # USD
-                    self._ath[1] = new_ath
-                    embed.add_field(name='New USD ATH:', value=f'{self._ath[1]}', inline=False)
+                    self._ath[1][0] = new_ath
+                    self._ath[1][1] = int(datetime.now().timestamp())
+                    embed.add_field(name='New USD ATH:', value=f'{self._ath[1][0]}', inline=False)
                 else: # Ratio
-                    self._ath[0] = new_ath
-                    embed.add_field(name='New ATH ratio:', value=f'{self._ath[0]}', inline=False)
+                    self._ath[0][0] = new_ath
+                    self._ath[0][1] = int(datetime.now().timestamp())
+                    embed.add_field(name='New ATH ratio:', value=f'{self._ath[0][0]}', inline=False)
                 self.save_ath()
                 embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
                 for ctx in self.ctx.values(): #send to all servers
@@ -184,8 +190,10 @@ class Unibot(commands.Cog):
                 return await ctx.send('Error updating ATH.')
         else:
             embed = discord.Embed(title='ATH', description='', color=discord.Color.from_rgb(255,255,255))
-            embed.add_field(name='Current ATH ratio:', value=f'{self._ath[0]}', inline=False)
-            embed.add_field(name='Current USD ATH:', value=f'{self._ath[1]}', inline=False)
+            embed.add_field(name='Current ATH ratio:', value=f'{self._ath[0][0]}', inline=False)
+            embed.add_field(name='Last updated ATH ratio:', value=f'<t:{self._ath[0][1]}:D>', inline=False)
+            embed.add_field(name='Current USD ATH:', value=f'{self._ath[1][0]}', inline=False)
+            embed.add_field(name='Last updated USD ATH:', value=f'<t:{self._ath[1][1]}:D>', inline=False)
             embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
             return await ctx.send(embed=embed)
 
