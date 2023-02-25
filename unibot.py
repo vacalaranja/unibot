@@ -661,13 +661,12 @@ class Unibot(commands.Cog):
     async def loop(self):
         self.counter += 1
         self.disable = False # Rate block /ratio (max 1 call / second)
-        if not self.counter % 30: # Update RPL and rETH ratio every 30s.
+        if not self.counter % 60: # Get swaps every minute.
             self.latest_ratio = self.get_ratio(self.new_rpl_address)
             self.latest_eth_price = self.get_usdc_price(WETH_ADDRESS)
             self.last_updated = int(datetime.now().timestamp())
             self.min_rpl = 25000 / (self.latest_eth_price * self.latest_ratio)
             #print(self.min_rpl, self.latest_ratio, self.latest_eth_price)
-        if not self.counter % 60: # Get swaps every minute.
             self.latest_reth_ratio = self.get_ratio(RETH_ADDRESS)
             done = True
             self.origins = {}
@@ -682,7 +681,7 @@ class Unibot(commands.Cog):
             if done:
                 remove_from_done = max(len(self.done) - self.max_done_cache, 0)
                 self.done = self.done[remove_from_done:]
-        if not self.counter % self._cex_time: #Get kraken and coinbase summary every 'self._cex_time' seconds.
+        if not self.counter % int(self._cex_time): #Get kraken and coinbase summary every 'self._cex_time' seconds.
             for embed in self.get_kraken_swaps():
                 for ctx in self.ctx.values(): #send to all servers
                     try:
