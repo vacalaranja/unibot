@@ -64,6 +64,7 @@ RETH_ADDRESS = '0xae78736cd615f374d3085123a210448e74fc6393'
 RPIT_ADDRESS = '0x21d722c340839751d23a4fb5b6d5e593f8cc82eb'
 USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
 PRICE_ORACLE = '0x07D91f5fb9Bf7798734C3f606dB065549F6893bb'
+SLEEP_DURATION = 2 # Sleep every loop (in seconds)
 DUST = 0.01
 ATH_FILE = os.getenv('ATH_FILE')
 ethscan_api_key = os.getenv('ETH_TOKEN')
@@ -104,7 +105,7 @@ class Unibot(commands.Cog):
         self.limit = 20 #number of transactions to pull every loop
         self.min_rpl = 700 #minimun value of transactions that will be included (updated every 30s to 25k USD)
         self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
-        self.sleep_duration = 2
+        self.sleep_duration = SLEEP_DURATION
         self._ath = self.load_ath()
         self.disable = True
         self.rpl_address = TOKEN_ADDRESS
@@ -666,7 +667,7 @@ class Unibot(commands.Cog):
             embed.set_footer(text=f'{_author} {_address}', icon_url=_icon)
             yield embed
 
-    @tasks.loop(seconds=self.sleep_duration)
+    @tasks.loop(seconds=SLEEP_DURATION)
     async def loop(self):
         self.counter += 1
         self.disable = False # Rate block /ratio (max 1 call / second)
