@@ -104,6 +104,7 @@ class Unibot(commands.Cog):
         self.limit = 20 #number of transactions to pull every loop
         self.min_rpl = 700 #minimun value of transactions that will be included (updated every 30s to 25k USD)
         self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
+        self.sleep_duration = 2
         self._ath = self.load_ath()
         self.disable = True
         self.rpl_address = TOKEN_ADDRESS
@@ -665,11 +666,11 @@ class Unibot(commands.Cog):
             embed.set_footer(text=f'{_author} {_address}', icon_url=_icon)
             yield embed
 
-    @tasks.loop(seconds=1)
+    @tasks.loop(seconds=self.sleep_duration)
     async def loop(self):
         self.counter += 1
         self.disable = False # Rate block /ratio (max 1 call / second)
-        if not self.counter % 60: # Get swaps every minute.
+        if not self.counter % int(60/self.sleep_duration): # Get swaps every minute.
             self.latest_ratio = self.get_ratio(self.new_rpl_address)
             self.latest_eth_price = self.get_usdc_price(WETH_ADDRESS)
             self.last_updated = int(datetime.now().timestamp())
@@ -689,7 +690,7 @@ class Unibot(commands.Cog):
             if done:
                 remove_from_done = max(len(self.done) - self.max_done_cache, 0)
                 self.done = self.done[remove_from_done:]
-        if not self.counter % int(self._cex_time): #Get kraken and coinbase summary every 'self._cex_time' seconds.
+        if not self.counter % int(self._cex_time/self.sleep_duration): #Get kraken and coinbase summary every 'self._cex_time' seconds.
             for embed in self.get_kraken_swaps():
                 for ctx in self.ctx.values(): #send to all servers
                     try:
