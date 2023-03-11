@@ -63,6 +63,7 @@ WETH_ADDRESS = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 RETH_ADDRESS = '0xae78736cd615f374d3085123a210448e74fc6393'
 RPIT_ADDRESS = '0x21d722c340839751d23a4fb5b6d5e593f8cc82eb'
 USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
+USDT_ADDRESS = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 PRICE_ORACLE = '0x07D91f5fb9Bf7798734C3f606dB065549F6893bb'
 SLEEP_DURATION = 2 # Sleep every loop (in seconds)
 DUST = 0.01
@@ -114,12 +115,13 @@ class Unibot(commands.Cog):
         self.reth_address = RETH_ADDRESS
         self.rpit_address = RPIT_ADDRESS
         self.usdc_address = USDC_ADDRESS
+        self.usdt_address = USDT_ADDRESS
         self.rpit_enabled = defaultdict(lambda: False)
         with open('oracle_abi.json') as f:
             abi = json.load(f)['result']
         self.oracle = web3.eth.contract(address=PRICE_ORACLE, abi=abi)
         self.latest_ratio = self.get_ratio(self.new_rpl_address)
-        self.latest_eth_price = self.get_usdc_price(self.weth_address)
+        self.latest_eth_price = self.get_usd_price(self.weth_address)
         self.latest_reth_ratio = self.get_ratio(self.reth_address)
         self.request_eur()
         self.last_updated = int(datetime.now().timestamp())
@@ -150,8 +152,8 @@ class Unibot(commands.Cog):
             ratio = ratio / 10**18
             return ratio
 
-    def get_usdc_price(self, address):
-        price = self.get_ratio(address, self.usdc_address)
+    def get_usd_price(self, address):
+        price = self.get_ratio(address, self.usdt_address)
         price = price * 10**12
         #print(price)
         return price
@@ -276,6 +278,7 @@ class Unibot(commands.Cog):
             d = json.loads(r.text)
         except:
             print('graph query error')
+            print(r)
             return None
         #print('data:', d)
         if 'data' in d:
@@ -673,7 +676,7 @@ class Unibot(commands.Cog):
         self.disable = False # Rate block /ratio (max 1 call / second)
         if not self.counter % int(60/self.sleep_duration): # Get swaps every minute.
             self.latest_ratio = self.get_ratio(self.new_rpl_address)
-            self.latest_eth_price = self.get_usdc_price(WETH_ADDRESS)
+            self.latest_eth_price = self.get_usd_price(WETH_ADDRESS)
             self.last_updated = int(datetime.now().timestamp())
             self.min_rpl = 25000 / (self.latest_eth_price * self.latest_ratio)
             #print(self.min_rpl, self.latest_ratio, self.latest_eth_price)
