@@ -278,7 +278,7 @@ class Unibot(commands.Cog):
             d = json.loads(r.text)
         except:
             print('graph query error')
-            print(r)
+            print(r.text)
             return None
         #print('data:', d)
         if 'data' in d:
@@ -976,8 +976,14 @@ class Unibot(commands.Cog):
         n = floor((ts - start)/period)
         period_ts = start + (period * n)
         next_period_ts = start + (period * (n + 1))
+        shapella = 1681257600 #2023-04-12
+        atlas = 1681776000 #2023-04-18
+        reth = 1680652800 #2023-04-04
         embed.add_field(name='Current rewards period start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
         embed.add_field(name='Next rewards period start', value=f'<t:{next_period_ts}>(<t:{next_period_ts}:R>)', inline=False)
+        embed.add_field(name='Deposit pool limit increase', value=f'<t:{reth}>(<t:{reth}:R>)', inline=False)
+        embed.add_field(name='Shapella (withdraws)', value=f'<t:{shapella}>(<t:{shapella}:R>)', inline=False)
+        embed.add_field(name='Atlas (LEB8)', value=f'<t:{atlas}>(<t:{atlas}:R>)', inline=False)
         embed.set_footer(text='All dates are displayed in your local timezone.')
         return await ctx.send(embed=embed)
 
