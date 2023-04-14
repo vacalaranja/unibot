@@ -98,7 +98,7 @@ class Unibot(commands.Cog):
         self.ctx = {}
         self.done = []
         self.coinbase_done = []
-        self._cex_time = 14400
+        self._cex_time = 43200 #12 hours
         self.kraken_last = 0
         self.zeroes = 10**18
         self.max_done_cache = 5000
@@ -278,7 +278,7 @@ class Unibot(commands.Cog):
             d = json.loads(r.text)
         except:
             print('graph query error')
-            print(r.text)
+            #print(r.text)
             return None
         #print('data:', d)
         if 'data' in d:
@@ -976,7 +976,7 @@ class Unibot(commands.Cog):
         n = floor((ts - start)/period)
         period_ts = start + (period * n)
         next_period_ts = start + (period * (n + 1))
-        shapella = 1681257600 #2023-04-12
+        shapella = 1681338455 #2023-04-12
         atlas = 1681776000 #2023-04-18
         reth = 1680652800 #2023-04-04
         embed.add_field(name='Current rewards period start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
