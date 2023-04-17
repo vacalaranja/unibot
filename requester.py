@@ -49,7 +49,7 @@ class Requester():
                 self.get_kraken_swaps()
                 self.redis.delete('cex_request')
                 #print('done')
-            await asyncio.sleep(10)
+            await asyncio.sleep(60)
 
 
     def cow_request(self, tx_id):
@@ -195,7 +195,7 @@ class Requester():
     def get_coinbase_swaps(self, pair='RPL-USD'):
         url = f'https://api.exchange.coinbase.com/products/{pair}/trades'
         headers = {'accept': 'application/json'}
-        params = {'limit':200}
+        params = {'limit':1000}
         r = requests.get(url, headers=headers, params=params)
         try:
             d = json.loads(r.text)
