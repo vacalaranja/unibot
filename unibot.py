@@ -77,8 +77,7 @@ class Unibot(commands.Cog):
                 for ctx in self.ctx.values(): #send to all servers
                     await ctx.send(embed=embed)
 
-            except:
-                raise
+            except ValueError:
                 return await ctx.send('Error updating ATH.')
         else:
             embed = discord.Embed(title='ATH', description='', color=discord.Color.from_rgb(255,255,255))
