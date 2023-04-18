@@ -91,12 +91,13 @@ class Requester():
             name = self.redis.hget('ens', address)
         else:
             name = self.ens_resolve(address)
-            self.redis.hset('ens', address, name)
-        if name is None:
+        if name is None or name == 'None':
+            self.redis.hset('ens', address, 'None')
             if cow_swap:
                 return f"[Sender: {address[:7]}...{address[-4:]}](https://etherscan.io/address/{address})"
             return f"[Sender: {address[:7]}...{address[-4:]}](https://etherscan.io/address/{address})"
         else:
+            self.redis.hset('ens', address, name)
             return f"[Sender: {name}](https://etherscan.io/address/{address})"
 
     async def get_swaps(self):

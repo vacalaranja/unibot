@@ -152,9 +152,12 @@ class Unibot(commands.Cog):
         #return 1.6 ETH in RPL (10%) and 24 ETH in RPL (150%) collateral rates.
         title = 'Collateral'
         embed = discord.Embed(title=title, description=f'',color=discord.Color.orange())
-        embed.add_field(name='16 ETH - 10%', value=f'1.6 ETH = {1.6/self.latest_ratio:,.2f} RPL')
-        embed.add_field(name='8 ETH - 10%', value=f'2.4 ETH = {2.4/self.latest_ratio:,.2f} RPL')
-        embed.add_field(name='150%', value=f'24 ETH = {24/self.latest_ratio:,.2f} RPL')
+        embed.add_field(name='8 ETH Minipools\n', value=f'\n', inline=False)
+        embed.add_field(name='10% (2.4 ETH)', value=f'{2.4/self.latest_ratio:,.2f} RPL')
+        embed.add_field(name='150% (12 ETH)', value=f'{12/self.latest_ratio:,.2f} RPL')
+        embed.add_field(name='16 ETH Minipools\n', value=f'\n', inline=False)
+        embed.add_field(name='10% (1.6 ETH)', value=f'{1.6/self.latest_ratio:,.2f} RPL')
+        embed.add_field(name='150% (24 ETH)', value=f'{24/self.latest_ratio:,.2f} RPL')
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         await ctx.send(embed=embed)
 
