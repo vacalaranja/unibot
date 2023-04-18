@@ -61,11 +61,11 @@ class Requester():
             print('cowswap error')
 #           print(f'data:{data}')
             return None
+        rpl_address = self.new_rpl_address.lower()
         for d in data:
             buy_token = d['buyToken']
             sell_token = d['sellToken']
             sender = d['receiver']
-            rpl_address = self.new_rpl_address.lower()
             if buy_token == rpl_address or sell_token == rpl_address:
                 return sender
         return None
@@ -87,7 +87,11 @@ class Requester():
     def get_sender(self, address, cow_swap):
         if cow_swap:
             address = cow_swap
-        name = self.ens_resolve(address)
+        if self.redis.hexists('ens', address):
+            name = self.redis.hget('ens', address)
+        else:
+            name = self.ens_resolve(address)
+            self.redis.hset('ens', address, name)
         if name is None:
             if cow_swap:
                 return f"[Sender: {address[:7]}...{address[-4:]}](https://etherscan.io/address/{address})"
