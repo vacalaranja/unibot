@@ -12,7 +12,7 @@ from web3 import Web3, IPCProvider
 from ens import ENS
 from oracle import Oracle
 from cex import Cex
-from constants import * 
+from constants import *
 
 infura_url = os.getenv('INFURA')
 web3 = Web3(Web3.HTTPProvider(infura_url))
@@ -21,7 +21,7 @@ ns = ENS.fromWeb3(web3)
 class Requester():
 
     def __init__(self):
-        self.limit = 20 #number of transactions to pull every loop
+        self.limit = 200 #number of transactions to pull every loop
         self.min_rpl = 500 #minimun value of transactions that will be included (updated every 30s to 25k USD)
         self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
         self.oracle = Oracle()

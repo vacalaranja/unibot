@@ -29,7 +29,6 @@ class Unibot(commands.Cog):
         self.ctx = {}
         self._cex_time = 43200 #12 hours
         self.zeroes = 10**18
-        self.max_done_cache = 5000
         self.loop_counter = 0
         self.sleep_duration = SLEEP_DURATION
         self._ath = self.load_ath()
@@ -153,7 +152,8 @@ class Unibot(commands.Cog):
         #return 1.6 ETH in RPL (10%) and 24 ETH in RPL (150%) collateral rates.
         title = 'Collateral'
         embed = discord.Embed(title=title, description=f'',color=discord.Color.orange())
-        embed.add_field(name='10%', value=f'1.6 ETH = {1.6/self.latest_ratio:,.2f} RPL')
+        embed.add_field(name='16 ETH - 10%', value=f'1.6 ETH = {1.6/self.latest_ratio:,.2f} RPL')
+        embed.add_field(name='8 ETH - 10%', value=f'2.4 ETH = {2.4/self.latest_ratio:,.2f} RPL')
         embed.add_field(name='150%', value=f'24 ETH = {24/self.latest_ratio:,.2f} RPL')
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         await ctx.send(embed=embed)
@@ -290,6 +290,7 @@ class Unibot(commands.Cog):
         embed.add_field(name="Jasper's Bullish Cases", value= '[Layer Zero](https://mirror.xyz/0x04BEE613690e98A1959F236c38AbAa5f2439B14a/CvGJPdUZ7Fnnpa8DsEXtL-W4FxoBoublwsmN-Im0kfg)\n[SaaS](https://mirror.xyz/0x04BEE613690e98A1959F236c38AbAa5f2439B14a/fxc6p0hF_zVj9KX1-xfo6P_3lJ6zrn2Ma2p962b54ek)', inline=False)
         embed.add_field(name="Jasper's essay, or: 'Why Paradigm Was Wrong: How rETH Will Flip stETH'", value= '[Essay](https://mirror.xyz/jasperthefriendlyghost.eth/pnaLyH6W4j58vfypsOKHciF_BM5HFvTkouTd9uThesM)\n[Main points (twitter thread)](https://twitter.com/Jasper_ETH/status/1607056757330939906)\n[Audiobook version  by Waqwaqattack](https://anchor.fm/rocket-fuel/episodes/A-Rocket-Fuel-Special---Why-Paradigm-Was-Wrong--How-rETH-Will-Flip-stETH-e1snfnb)', inline=False)
         embed.add_field(name="Ib1gymnast's Investment Thesis", value='[Google docs link](https://drive.google.com/file/d/1JXXM-QjGMXItLujUOjSb8q7pBzb6C7Md/view)', inline=False)
+        embed.add_field(name="CMS's LSD Thesis", value='[Link](https://cmsholdings.substack.com/p/lsds-rocketpool?sd=pf)', inline=False)
         embed.add_field(name="Hanniabu's Theses Collection", value= '[Community site](https://fervent-curie-5c2bfc.netlify.app/thesis/)', inline=False)
         await ctx.send(embed=embed)
 
@@ -326,12 +327,10 @@ class Unibot(commands.Cog):
         n = floor((ts - start)/period)
         period_ts = start + (period * n)
         next_period_ts = start + (period * (n + 1))
-        shapella = 1681338455 #2023-04-12
-        atlas = 1681776000 #2023-04-18
+        invis = 1683158400 #2023-05-04
         embed.add_field(name='Current rewards period start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
         embed.add_field(name='Next rewards period start', value=f'<t:{next_period_ts}>(<t:{next_period_ts}:R>)', inline=False)
-        embed.add_field(name='Shapella (withdraws)', value=f'<t:{shapella}>(<t:{shapella}:R>)', inline=False)
-        embed.add_field(name='Atlas (LEB8)', value=f'<t:{atlas}>(<t:{atlas}:R>)', inline=False)
+        embed.add_field(name='#freeinvis', value=f'<t:{invis}>(<t:{invis}:R>)', inline=False)
         embed.set_footer(text='All dates are displayed in your local timezone.')
         return await ctx.send(embed=embed)
 
