@@ -54,8 +54,8 @@ class Requester():
 
     def cow_request(self, tx_id):
         url = f'https://api.cow.fi/mainnet/api/v1/transactions/{tx_id}/orders'
-        r = requests.get(url)
         try:
+            r = requests.get(url)
             data = json.loads(r.text)
         except:
             print('cowswap error')
