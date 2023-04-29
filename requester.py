@@ -10,7 +10,6 @@ import discord
 from dateutil.parser import isoparse
 from web3 import Web3, IPCProvider
 from ens import ENS
-from oracle import Oracle
 from cex import Cex
 from constants import *
 
@@ -24,7 +23,6 @@ class Requester():
         self.limit = 200 #number of transactions to pull every loop
         self.min_rpl = 500 #minimun value of transactions that will be included (updated every 30s to 25k USD)
         self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
-        self.oracle = Oracle()
         self.cex = Cex()
         self.redis = redis.StrictRedis(charset='utf-8', decode_responses=True)
         self.rpl_address = TOKEN_ADDRESS
@@ -33,14 +31,15 @@ class Requester():
         self.reth_address = RETH_ADDRESS
         self.rpit_address = RPIT_ADDRESS
         self.usdc_address = USDC_ADDRESS
-        self.usdt_address = USDT_ADDRESS
-        self.latest_eth_price = self.oracle.get_usd_price(self.weth_address)
-        self.latest_reth_ratio = self.oracle.get_ratio(self.reth_address)
+        self.latest_eth_price = float(self.redis.get('eth'))
+        self.latest_reth_ratio = float(self.redis.get('reth'))
         self.origins = {}
 
     async def loop(self):
         while True:
             #print('getting swaps')
+            self.latest_eth_price = float(self.redis.get('eth'))
+            self.latest_reth_ratio = float(self.redis.get('reth'))
             await self.get_swaps()
             #print('done')
             if self.redis.get('cex_request'):

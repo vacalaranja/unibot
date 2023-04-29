@@ -12,7 +12,6 @@ from random import random, choice
 
 from constants import *
 from cex import Cex
-from oracle import Oracle
 
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
@@ -34,14 +33,11 @@ class Unibot(commands.Cog):
         self._ath = self.load_ath()
         self.disable = True
         self.new_rpl_address = NEW_TOKEN_ADDRESS
-        self.weth_address = WETH_ADDRESS
-        self.reth_address = RETH_ADDRESS
-        self.oracle = Oracle()
         self.cex = Cex()
         self.redis = redis.StrictRedis()
-        self.latest_ratio = self.oracle.get_ratio(self.new_rpl_address)
-        self.latest_eth_price = self.oracle.get_usd_price(self.weth_address)
-        self.latest_reth_ratio = self.oracle.get_ratio(self.reth_address)
+        self.latest_ratio = float(self.redis.get('ratio').decode('utf-8'))
+        self.latest_eth_price = float(self.redis.get('eth').decode('utf-8'))
+        self.latest_reth_ratio = float(self.redis.get('reth').decode('utf-8'))
         self.last_updated = int(datetime.now().timestamp())
         self.loop.start()
 
@@ -119,12 +115,12 @@ class Unibot(commands.Cog):
 #                if 'Servidor' in str(c.guild):
 #                    await c.send('Ping ' + str(datetime.now()))
         if not self.loop_counter % int(10/self.sleep_duration): # Get swaps every 10s.
-            self.latest_ratio = self.oracle.get_ratio(self.new_rpl_address)
-            self.latest_eth_price = self.oracle.get_usd_price(self.weth_address)
+            self.latest_ratio = float(self.redis.get('ratio').decode('utf-8'))
+            self.latest_eth_price = float(self.redis.get('eth').decode('utf-8'))
+            self.latest_reth_ratio = float(self.redis.get('reth').decode('utf-8'))
             self.last_updated = int(datetime.now().timestamp())
             self.min_rpl = 25000 / (self.latest_eth_price * self.latest_ratio)
             #print(self.min_rpl, self.latest_ratio, self.latest_eth_price)
-            self.latest_reth_ratio = self.oracle.get_ratio(self.reth_address)
             done = True
             while self.redis.exists('embeds'):
                 embed = pickle.loads(self.redis.lpop('embeds'))
