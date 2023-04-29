@@ -27,13 +27,13 @@ class Oracle():
     def get_ratio(self, address, to_address=None):
         if to_address is None:
             to_address = self.weth_address
-        url = 'https://api.1inch.io/v5.0/1/quote'
-        params = {'fromTokenAddress': address,
-                  'toTokenAddress': to_address,
-                  'amount': str(10**18)
-        }
-        r = requests.get(url, params=params)
         try:
+            url = 'https://api.1inch.io/v5.0/1/quote'
+            params = {'fromTokenAddress': address,
+                      'toTokenAddress': to_address,
+                      'amount': str(10**18)
+            }
+            r = requests.get(url, params=params)
             d = json.loads(r.text)
             return float(d['toTokenAmount'])/float(d['fromTokenAmount'])
             #print(d)
@@ -41,7 +41,7 @@ class Oracle():
             #try backup oracle
             to_address = Web3.toChecksumAddress(to_address)
             address = Web3.toChecksumAddress(address)
-            ratio = self.oracle.functions.getRate(Web3.toChecksumAddress(address), to_address, False).call()
+            ratio = self.oracle.functions.getRate(address, to_address, True).call()
             ratio = ratio / 10**18
             return ratio
 
