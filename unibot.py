@@ -173,39 +173,39 @@ class Unibot(commands.Cog):
             url = f'https://api.dev.dex.guru/v1/chain/1/tokens/{self.new_rpl_address}/market'
             r = requests.get(url, params={'api-key':dex_api_key})
             result = json.loads(r.text)
+            keys = {"volume_24h": 'Volume',
+                "liquidity": 'Liquidity',
+                "volume_24h_usd": 'USD Volume',
+                "liquidity_usd": 'USD Liquidity',
+                "price_usd": 'USD Price',
+                "volume_24h_delta": '24h Volume delta',
+                "liquidity_24h_delta": '24h Liquidity delta',
+                "price_24h_delta": '24h Price delta',
+                "volume_24h_delta_usd": '24h USD Volume delta',
+                "liquidity_24h_delta_usd": '24h USD Liquidity delta',
+                "price_24h_delta_usd": '24h USD Price delta',
+                "timestamp": 'Timestamp'}
+            title = '24h DEX RPL stats'
+            embed = discord.Embed(title=title, description=f'',color=discord.Color.orange())
+            for k in keys:
+                if k == 'timestamp':
+                    embed.add_field(name=f'{keys[k]}', value=f'<t:{result[k]}>', inline=False)
+                elif '_usd' not in k and 'delta' not in k:
+                    if 'liquidity' in k:
+                        usd = f'{result[k + "_usd"]:,.2f} USD ({result[k+"_24h_delta_usd"]:.0%})'
+                        eth = f'{result[k]:,.2f} ETH ({result[k+"_24h_delta"]:.0%})'
+                    elif 'volume' in k:
+                        usd = f'{result[k + "_usd"]:,.2f} USD ({result[k+"_delta_usd"]:.0%})'
+                        eth = f'{result[k]:,.2f} ETH ({result[k+"_delta"]:.0%})'
+                    embed.add_field(name=f'{keys[k]}', value=f'{usd}\n{eth}', inline=False)
+                elif 'price' in k and '24h' not in k:
+                    usd = f'{result[k]:,.2f} USD ({result["price_24h_delta_usd"]:.0%})'
+                    eth = f'{self.latest_ratio:,.5f} ETH ({result["price_24h_delta"]:.0%})'
+                    embed.add_field(name=f'{keys[k]}', value=f'{usd}\n{eth}', inline=False)
+            embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
+            await ctx.send(embed=embed)
         except:
             return await ctx.send('Too many requests')
-        keys = {"volume_24h": 'Volume',
-            "liquidity": 'Liquidity',
-            "volume_24h_usd": 'USD Volume',
-            "liquidity_usd": 'USD Liquidity',
-            "price_usd": 'USD Price',
-            "volume_24h_delta": '24h Volume delta',
-            "liquidity_24h_delta": '24h Liquidity delta',
-            "price_24h_delta": '24h Price delta',
-            "volume_24h_delta_usd": '24h USD Volume delta',
-            "liquidity_24h_delta_usd": '24h USD Liquidity delta',
-            "price_24h_delta_usd": '24h USD Price delta',
-            "timestamp": 'Timestamp'}
-        title = '24h DEX RPL stats'
-        embed = discord.Embed(title=title, description=f'',color=discord.Color.orange())
-        for k in keys:
-            if k == 'timestamp':
-                embed.add_field(name=f'{keys[k]}', value=f'<t:{result[k]}>', inline=False)
-            elif '_usd' not in k and 'delta' not in k:
-                if 'liquidity' in k:
-                    usd = f'{result[k + "_usd"]:,.2f} USD ({result[k+"_24h_delta_usd"]:.0%})'
-                    eth = f'{result[k]:,.2f} ETH ({result[k+"_24h_delta"]:.0%})'
-                elif 'volume' in k:
-                    usd = f'{result[k + "_usd"]:,.2f} USD ({result[k+"_delta_usd"]:.0%})'
-                    eth = f'{result[k]:,.2f} ETH ({result[k+"_delta"]:.0%})'
-                embed.add_field(name=f'{keys[k]}', value=f'{usd}\n{eth}', inline=False)
-            elif 'price' in k and '24h' not in k:
-                usd = f'{result[k]:,.2f} USD ({result["price_24h_delta_usd"]:.0%})'
-                eth = f'{self.latest_ratio:,.5f} ETH ({result["price_24h_delta"]:.0%})'
-                embed.add_field(name=f'{keys[k]}', value=f'{usd}\n{eth}', inline=False)
-        embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
-        await ctx.send(embed=embed)
 
     @commands.command()
     async def jam(self, ctx):
@@ -326,10 +326,8 @@ class Unibot(commands.Cog):
         n = floor((ts - start)/period)
         period_ts = start + (period * n)
         next_period_ts = start + (period * (n + 1))
-        invis = 1683158400 #2023-05-04
         embed.add_field(name='Current rewards period start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
         embed.add_field(name='Next rewards period start', value=f'<t:{next_period_ts}>(<t:{next_period_ts}:R>)', inline=False)
-        embed.add_field(name='#freeinvis', value=f'<t:{invis}>(<t:{invis}:R>)', inline=False)
         embed.set_footer(text='All dates are displayed in your local timezone.')
         return await ctx.send(embed=embed)
 
