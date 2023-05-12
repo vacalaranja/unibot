@@ -54,12 +54,16 @@ class Oracle():
     async def loop(self):
         while True:
             #print('getting swaps')
-            ratio = self.get_ratio(self.new_rpl_address)
-            eth_price = self.get_usd_price(self.weth_address)
-            reth_ratio = self.get_ratio(self.reth_address)
-            self.redis.set('eth', eth_price)
-            self.redis.set('reth', reth_ratio)
-            self.redis.set('ratio', ratio)
+            try:
+                ratio = self.get_ratio(self.new_rpl_address)
+                eth_price = self.get_usd_price(self.weth_address)
+                reth_ratio = self.get_ratio(self.reth_address)
+                self.redis.set('eth', eth_price)
+                self.redis.set('reth', reth_ratio)
+                self.redis.set('ratio', ratio)
+            except:
+                print('Error')
+                pass
             await asyncio.sleep(60)
 
 if __name__ == '__main__':
