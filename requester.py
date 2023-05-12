@@ -111,7 +111,7 @@ class Requester():
             if swaps is None:
                 #print(f'No swaps found for pair {p}')
                 return None
-            txs = self.parse_swaps(swaps, txs)
+            txs.update(self.parse_swaps(swaps, txs))
         grouped_txs = self.group_txs(txs)
 #        print(grouped_txs)
         for k, data in grouped_txs.items():
