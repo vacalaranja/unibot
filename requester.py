@@ -14,33 +14,35 @@ from cex import Cex
 from constants import *
 
 infura_url = os.getenv('INFURA')
-graph_api = os.getenv('GRAPH_API')
 web3 = Web3(Web3.HTTPProvider(infura_url))
 ns = ENS.fromWeb3(web3)
 
 class Requester():
 
     def __init__(self):
-        self.limit = 200 #number of transactions to pull every loop
-        self.min_rpl = 600 #minimun value of transactions that will be included (updated every 60s to 25k USD)
-        self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
+        self.limit = 20 #number of transactions to pull every loop
+#        self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
         self.cex = Cex()
         self.redis = redis.StrictRedis(charset='utf-8', decode_responses=True)
         self.rpl_address = TOKEN_ADDRESS
         self.new_rpl_address = NEW_TOKEN_ADDRESS
         self.weth_address = WETH_ADDRESS
         self.reth_address = RETH_ADDRESS
+        self.origins = {}
 #        self.rpit_address = RPIT_ADDRESS
 #        self.usdc_address = USDC_ADDRESS
-        self.latest_eth_price = float(self.redis.get('eth'))
-        self.latest_reth_ratio = float(self.redis.get('reth'))
-        self.origins = {}
+#        self.latest_eth_price = float(self.redis.get('eth'))
+#        self.latest_reth_ratio = float(self.redis.get('reth'))
+#        self.latest_ratio = float(self.redis.get('ratio'))
+#        self.min_rpl = 25000 / (self.latest_eth_price * self.latest_ratio)
 
     async def loop(self):
         while True:
             #print('getting swaps')
             self.latest_eth_price = float(self.redis.get('eth'))
             self.latest_reth_ratio = float(self.redis.get('reth'))
+            self.latest_ratio = float(self.redis.get('ratio'))
+            self.min_rpl = 25000 / (self.latest_eth_price * self.latest_ratio)
             await self.get_swaps()
             #print('done')
             if self.redis.get('cex_request'):
@@ -54,7 +56,7 @@ class Requester():
 
     def cow_request(self, tx_id):
         url = f'https://api.cow.fi/mainnet/api/v1/transactions/{tx_id}/orders'
-#        print(tx_id)
+        #print(tx_id)
 #        print(url)
         try:
             r = requests.get(url)
@@ -104,16 +106,16 @@ class Requester():
             return f"[Sender: {name}](https://etherscan.io/address/{address})"
 
     async def get_swaps(self):
-        pairs = [(self.weth_address, self.new_rpl_address),
-                 (self.new_rpl_address, self.weth_address)]
+        pairs = [(self.weth_address, self.new_rpl_address)]
         txs = {}
         for p in pairs:
-            swaps = await self.new_graphql_request(token0=p[0], token1=p[1])
+            swaps = await self.graphql_request(token0=p[0], token1=p[1], min_rpl=self.min_rpl)
             if swaps is None:
                 #print(f'No swaps found for pair {p}')
                 return None
-            txs.update(self.new_parse_swaps(swaps, txs))
+            txs.update(self.parse_swaps(swaps, txs))
         grouped_txs = self.group_txs(txs)
+        #print('grouped: ', grouped_txs)
         for k, data in grouped_txs.items():
             if 'title' not in data: #bellow min value
                 continue
@@ -268,58 +270,7 @@ class Requester():
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         self.redis.rpush('cex', pickle.dumps(embed))
 
-    async def new_graphql_request(self, limit=None, token0=None, token1=None):
-        if limit is None:
-            limit = self.limit
-        if token0 is None:
-            token0 = self.rpl_address
-        if token1 is None:
-            token1 = self.weth_address
-        query = '{swaps(orderBy: timestamp, orderDirection: desc, first:'
-        query += str(limit)
-        query += ' where: {tokenIn:"'
-        query += str(token0)
-        query += '", tokenOut:"'
-        query += str(token1)
-        query += '"'
-        query += '''})
-      {
-        id
-        timestamp
-        tokenIn {
-          symbol
-          decimals
-        }
-        tokenOut{
-          symbol
-          decimals
-        }
-        amountIn
-        amountOut
-        amountOutUSD
-        from
-      }
-    }
-    '''
-        #print(query)
-        #url = 'https://api.thegraph.com/subgraphs/name/ianlapham/uniswap-v3-minimal' backup (unrealiable)
-        #url = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
-        url = f'https://gateway.thegraph.com/api/{graph_api}/subgraphs/id/ELUcwgpm14LKPLrBRuVvPvNKHQ9HvwmtKgKSH6123cr7'
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.post(url, json={'query': query}) as r:
-                    d = json.loads(await r.text())
-#                    print('data:', d)
-                    if 'data' in d:
-                        return d['data']['swaps']
-                    else:
-                        return None
-            except:
-                print('graph query error')
-                #print(r.text)
-                return None
-
-    async def graphql_request(self, limit=None, token0=None, token1=None):
+    async def graphql_request(self, limit=None, token0=None, token1=None, min_rpl=0):
         if limit is None:
             limit = self.limit
         if token0 is None:
@@ -332,7 +283,9 @@ class Requester():
         query += str(token0)
         query += '", token1:"'
         query += str(token1)
-        query += '"'
+        if min_rpl:
+            query += '", amount1_gt:'
+            query += str(min_rpl)
         query += '''})
       {
         id
@@ -361,7 +314,7 @@ class Requester():
             try:
                 async with session.post(url, json={'query': query}) as r:
                     d = json.loads(await r.text())
-#                    print('data:', d)
+                    #print('data:', d)
                     if 'data' in d:
                         return d['data']['swaps']
                     else:
@@ -388,101 +341,13 @@ class Requester():
             sender_address = swap['origin']
             cow_sender = self.cow_request(tx_id)
             origin = self.get_sender(sender_address, cow_sender)
-            usdc = False
-            rETH = False
-            if token0 == 'USDC':
-                weth_amount = amount0/self.latest_eth_price
-                new_rpl_amount = amount1
-                rpl_amount = 0
-                rpl_price = abs(amount0/amount1)
-                usdc = True
-            elif token1 == 'RPL' and token0 == 'RPL':
-                new_rpl_amount = amount1
-                rpl_amount = amount0
-                weth_amount = 0
-                rpl_price = abs(amountUSD/rpl_amount)
-            elif token1 == 'RPL':
-                new_rpl_amount = amount1
-                rpl_amount = 0
-                weth_amount = amount0
-                rpl_price = abs(amountUSD/new_rpl_amount)
-            elif token0 == 'RPL':
-                rpl_amount = amount0
-                new_rpl_amount = 0
-                weth_amount = amount1
-                rpl_price = abs(amountUSD/rpl_amount)
-            if token0 == 'rETH':
-                rETH = True
-                weth_amount *= self.latest_reth_ratio
-            txs[swap_id] = {'Time':f'<t:{timestamp}>', 'tx':tx_id, 'Old-RPL':rpl_amount,'New-RPL':new_rpl_amount,
-                            'WETH':weth_amount, 'Sender':origin, 'USD value':amountUSD, 'USD price':rpl_price,
-                            'sandwich':False, 'rETH':rETH, 'USDC':usdc, 'cow':bool(cow_sender)}#'token0':token0, 'token1':token1, 
-            if check_sandwich and (swap['origin'] not in self.origins):
-                self.origins[swap['origin']] = swap_id
-            elif check_sandwich:
-                maybe_sandwich = self.origins[swap['origin']]
-                if maybe_sandwich in txs and txs[maybe_sandwich]['tx'] != tx_id:
-                    maybe_sandwich_eth = txs[maybe_sandwich]['WETH']
-                    if (maybe_sandwich_eth > 0) != (weth_amount > 0): #opposite trades
-                        txs[swap_id]['sandwich'] = True
-                        txs[maybe_sandwich]['sandwich'] = True
-        return txs
-
-    def new_parse_swaps(self, data, txs, check_sandwich=True):
-        for swap in data[::-1]:
-            swap_id = swap['id']
-            if self.redis.sismember('done', swap_id):
-                continue
-            else:
-                self.redis.sadd('done', swap_id)
-            tx_id = swap['id'].split('-')[0]
-            amount0 = -float(swap['amountIn']) / 10**int(swap['tokenIn']['decimals'])
-            amount1 = float(swap['amountOut']) / 10**int(swap['tokenOut']['decimals'])
-            token0 = swap['tokenIn']['symbol']
-            token1 = swap['tokenOut']['symbol']
-            amountUSD = float(swap['amountOutUSD'])
-            timestamp = swap['timestamp']
-            sender_address = swap['from']
-            #cow_sender = self.cow_request(tx_id)
-            cow_sender = None
-            origin = self.get_sender(sender_address, cow_sender)
-#            usdc = False
-#            rETH = False
-#            if token0 == 'USDC':
-#                weth_amount = amount0/self.latest_eth_price
-#                new_rpl_amount = amount1
-#                rpl_amount = 0
-#                rpl_price = abs(amount0/amount1)
-#                usdc = True
-#            elif token1 == 'RPL' and token0 == 'RPL':
-#                new_rpl_amount = amount1
-#                rpl_amount = amount0
-#                weth_amount = 0
-#                rpl_price = abs(amountUSD/rpl_amount)
-#            if token1 == 'RPL':
-#                new_rpl_amount = amount1
-#                rpl_amount = 0
-#                weth_amount = amount0
-#                rpl_price = abs(amountUSD/new_rpl_amount)
-#            elif token0 == 'RPL':
-#                rpl_amount = amount0
-#                new_rpl_amount = 0
-#                weth_amount = amount1
-#                rpl_price = abs(amountUSD/rpl_amount)
-#            if token0 == 'rETH':
-#                rETH = True
-#                weth_amount *= self.latest_reth_ratio
-            if token0 == 'RPL':
-                new_rpl_amount = amount0
-                weth_amount = amount1
-            elif token1 == 'RPL':
-                new_rpl_amount = amount1
-                weth_amount = amount0
+            new_rpl_amount = amount1
+            weth_amount = amount0
             rpl_amount = 0
             rpl_price = abs(amountUSD/new_rpl_amount)
             txs[swap_id] = {'Time':f'<t:{timestamp}>', 'tx':tx_id, 'Old-RPL':rpl_amount,'New-RPL':new_rpl_amount,
                             'WETH':weth_amount, 'Sender':origin, 'USD value':amountUSD, 'USD price':rpl_price,
-                            'sandwich':False, 'cow':bool(cow_sender), 'rETH':False}#'rETH':rETH, 'USDC':usdc, token0':token0, 'token1':token1, 
+                            'sandwich':False, 'cow':bool(cow_sender)}#'token0':token0, 'token1':token1, 
             if check_sandwich and (sender_address not in self.origins):
                 self.origins[sender_address] = swap_id
             elif check_sandwich:
@@ -508,10 +373,10 @@ class Requester():
                 grouped[swap['tx']] = swap
                 grouped[swap['tx']]['total_swapped'] = abs(swap['WETH'])
         for tx, swap in grouped.copy().items():
-            if abs(swap['New-RPL']) < self.min_rpl and abs(swap['Old-RPL']) < self.min_rpl and swap['total_swapped'] < self.min_eth:
-#                print(f'skiping swap: {swap}')
-                if 'adada.eth' not in swap['Sender']:
-                    continue
+#            if abs(swap['New-RPL']) < self.min_rpl and abs(swap['Old-RPL']) < self.min_rpl and swap['total_swapped'] < self.min_eth:
+##                print(f'skiping swap: {swap}')
+#                if 'adada.eth' not in swap['Sender']:
+#                    continue
             if abs(swap['WETH']) < DUST and abs(swap['New-RPL']) > DUST and abs(swap['Old-RPL']) > DUST:
                 grouped[tx]['color'] = discord.Color.blue()
                 if swap['New-RPL'] > 0:
