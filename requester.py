@@ -117,7 +117,6 @@ class Requester():
         grouped_txs = self.group_txs(txs)
         #print('grouped: ', grouped_txs)
         for k, data in grouped_txs.items():
-            print(data)
             if 'title' not in data: #bellow min value
                 continue
             description = f'[Transaction: {data["tx"][:7]}...{data["tx"][-4:]}](https://etherscan.io/tx/{data["tx"]})'

@@ -124,9 +124,9 @@ class Unibot(commands.Cog):
             while self.redis.exists('embeds'):
                 raw_embed = self.redis.lpop('embeds')
                 embed = pickle.loads(raw_embed)
-                if self.redis.ismember('embeds_done', raw_embed):
+                if self.redis.sismember('embeds_done', raw_embed):
                     continue
-                self.redis.sadd('embeds_done')
+                self.redis.sadd('embeds_done', raw_embed)
                 for ctx in self.ctx.values(): #send to all servers
                     try:
                         await ctx.send(embed=embed)
