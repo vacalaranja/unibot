@@ -20,7 +20,7 @@ ns = ENS.fromWeb3(web3)
 class Requester():
 
     def __init__(self):
-        self.limit = 200 #number of transactions to pull every loop
+        self.limit = 20 #number of transactions to pull every loop
 #        self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
         self.cex = Cex()
         self.redis = redis.StrictRedis(charset='utf-8', decode_responses=True)

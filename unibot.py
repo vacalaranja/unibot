@@ -124,16 +124,15 @@ class Unibot(commands.Cog):
             while self.redis.exists('embeds'):
                 raw_embed = self.redis.lpop('embeds')
                 embed = pickle.loads(raw_embed)
-                if self.redis.sismember('embeds_done', raw_embed):
-                    continue
-                self.redis.sadd('embeds_done', raw_embed)
-                for ctx in self.ctx.values(): #send to all servers
-                    try:
-                        await ctx.send(embed=embed)
-                        self.last_embed = embed
-                    except:
-                        done = False
-                        break
+                if not self.redis.sismember('embeds_done', raw_embed):
+                    self.redis.sadd('embeds_done', raw_embed)
+                    for ctx in self.ctx.values(): #send to all servers
+                        try:
+                            await ctx.send(embed=embed)
+                            self.last_embed = embed
+                        except:
+                            done = False
+                            break
             while self.redis.exists('cex'):
                 embed = pickle.loads(self.redis.lpop('cex'))
                 embed.description = f'{self._cex_time/60/60:.0f}h summary'
