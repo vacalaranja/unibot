@@ -122,7 +122,11 @@ class Unibot(commands.Cog):
             #print(self.latest_ratio, self.latest_eth_price)
             done = True
             while self.redis.exists('embeds'):
-                embed = pickle.loads(self.redis.lmove('embeds', 'embeds_done'))
+                raw_embed = self.redis.lpop('embeds')
+                embed = pickle.loads(raw_embed)
+                if self.redis.ismember('embeds_done', raw_embed):
+                    continue
+                self.redis.sadd('embeds_done')
                 for ctx in self.ctx.values(): #send to all servers
                     try:
                         await ctx.send(embed=embed)

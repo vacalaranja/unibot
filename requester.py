@@ -20,7 +20,7 @@ ns = ENS.fromWeb3(web3)
 class Requester():
 
     def __init__(self):
-        self.limit = 20 #number of transactions to pull every loop
+        self.limit = 200 #number of transactions to pull every loop
 #        self.min_eth = 60 #Ignore the minimun value of transactions if more than this many ETH gets traded.
         self.cex = Cex()
         self.redis = redis.StrictRedis(charset='utf-8', decode_responses=True)
@@ -117,6 +117,7 @@ class Requester():
         grouped_txs = self.group_txs(txs)
         #print('grouped: ', grouped_txs)
         for k, data in grouped_txs.items():
+            print(data)
             if 'title' not in data: #bellow min value
                 continue
             description = f'[Transaction: {data["tx"][:7]}...{data["tx"][-4:]}](https://etherscan.io/tx/{data["tx"]})'
@@ -131,13 +132,6 @@ class Requester():
                 data['color'] = discord.Color.from_rgb(255, 105, 180)
             embed = discord.Embed(title=data['title'], description=description,color=data['color'])
             for value in data:
-                if 'WETH' not in data: #new/old swap
-                    if value == 'Old-RPL':
-                        embed.add_field(name='Old-RPL', value=f'{data[value]:,.2f}')
-                        embed.add_field(name='New-RPL', value=f'{data["New-RPL"]:,.2f}')
-                        continue
-                    elif value in ['USD price', 'New-RPL', 'USD value']:
-                        continue
                 if 'Arbitrage' in data['title']: #Arbitrage and Arbitrage Sandwich
                     if value == 'WETH':
                         embed.add_field(name='WETH profit', value=f'{data["WETH"]:,.2f}')
@@ -166,9 +160,9 @@ class Requester():
                     embed.add_field(name='Ratio', value=f'{ratio:.5f}')
             embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
             self.redis.rpush('embeds', pickle.dumps(embed))
-            with open('embed.txt', 'wb') as f:
-                f.write(pickle.dumps(embed))
-            break
+            #print(self.redis.llen('embeds'))
+#            with open('embed.txt', 'wb') as f:
+#                f.write(pickle.dumps(embed))
         #print(self.redis.llen('embeds'), ' embeds')
 
     def get_kraken_swaps(self):
@@ -277,16 +271,13 @@ class Requester():
             token0 = self.rpl_address
         if token1 is None:
             token1 = self.weth_address
-        query = '{swaps(orderBy: timestamp, orderDirection: desc, first:'
-        query += str(limit)
-        query += ' where: {token0:"'
-        query += str(token0)
-        query += '", token1:"'
-        query += str(token1)
+        query = (
+        f'{{swaps(orderBy: timestamp, orderDirection: desc, first: {str(limit)} '
+        f'where: {{and:[{{token0:"{str(token0)}"}}, {{token1:"{str(token1)}"}}, '
+        )
         if min_rpl:
-            query += '", amount1_gt:'
-            query += str(min_rpl)
-        query += '''})
+            query += f'{{or:[{{amount1_gt:{str(min_rpl)}}}, {{amount1_lt:-{str(min_rpl)}}}]}}'
+        query +=''']})
       {
         id
         timestamp
@@ -357,6 +348,7 @@ class Requester():
                     if (maybe_sandwich_eth > 0) != (weth_amount > 0): #opposite trades
                         txs[swap_id]['sandwich'] = True
                         txs[maybe_sandwich]['sandwich'] = True
+        #print('parse: ', len(txs))
         return txs
 
     def group_txs(self, txs):
@@ -425,6 +417,7 @@ class Requester():
 #                    grouped[tx]['title'] += ' (rETH)'
 #                if (grouped[tx].get('New-RPL', 0) + grouped[tx].get('Old-RPL', 0)) != 0:
 #                    grouped[tx]['USD price'] = abs(total_value / (grouped[tx].get('New-RPL', 0) + grouped[tx].get('Old-RPL', 0)))
+        #print('group: ', len(grouped))
         return grouped
 
 if __name__ == '__main__':
