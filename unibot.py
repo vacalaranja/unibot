@@ -293,6 +293,7 @@ class Unibot(commands.Cog):
         embed.add_field(name="Jasper's essay, or: 'Why Paradigm Was Wrong: How rETH Will Flip stETH'", value= '[Essay](https://mirror.xyz/jasperthefriendlyghost.eth/pnaLyH6W4j58vfypsOKHciF_BM5HFvTkouTd9uThesM)\n[Main points (twitter thread)](https://twitter.com/Jasper_ETH/status/1607056757330939906)\n[Audiobook version  by Waqwaqattack](https://anchor.fm/rocket-fuel/episodes/A-Rocket-Fuel-Special---Why-Paradigm-Was-Wrong--How-rETH-Will-Flip-stETH-e1snfnb)', inline=False)
         embed.add_field(name="Ib1gymnast's Investment Thesis", value='[Google docs link](https://drive.google.com/file/d/1JXXM-QjGMXItLujUOjSb8q7pBzb6C7Md/view)', inline=False)
         embed.add_field(name="CMS's LSD Thesis", value='[Link](https://cmsholdings.substack.com/p/lsds-rocketpool?sd=pf)', inline=False)
+        embed.add_field(name="Dabdab's LSD Insurance, Illustrated", value='[Link](https://mirror.xyz/dabdab.eth/udO6ovzWGglr7KMBSFHS8hy7_q9ORvZReetYvUCh3ho)', inline=False)
         embed.add_field(name="Hanniabu's Theses Collection", value= '[Community site](https://fervent-curie-5c2bfc.netlify.app/thesis/)', inline=False)
         await ctx.send(embed=embed)
 
