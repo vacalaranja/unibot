@@ -132,7 +132,7 @@ class Unibot(commands.Cog):
                             self.last_embed = embed
                         except:
                             done = False
-                            break
+                            continue
             while self.redis.exists('cex'):
                 embed = pickle.loads(self.redis.lpop('cex'))
                 embed.description = f'{self._cex_time/60/60:.0f}h summary'
@@ -140,7 +140,7 @@ class Unibot(commands.Cog):
                     try:
                         await ctx.send(embed=embed)
                     except:
-                        break
+                        continue
         if not self.loop_counter % int(self._cex_time/self.sleep_duration): #Get kraken and coinbase summary every 'self._cex_time' seconds.
             self.redis.set('cex_request', 1)
             self.loop_counter = 0
