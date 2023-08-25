@@ -9,6 +9,7 @@ from constants import *
 
 infura_url = os.getenv('INFURA')
 openexchange_api_key = os.getenv('OPENEXCHANGE')
+oneinch_api_key = os.getenv('INCH_API')
 
 web3 = Web3(Web3.HTTPProvider(infura_url))
 
@@ -24,21 +25,28 @@ class Oracle():
             abi = json.load(f)['result']
         self.oracle = web3.eth.contract(address=PRICE_ORACLE, abi=abi)
 
-    def get_ratio(self, address, to_address=None):
-        if to_address is None:
-            to_address = self.weth_address
+    def get_ratio(self, address, usd=False):
         try:
-            url = 'https://api.1inch.io/v5.0/1/quote'
-            params = {'fromTokenAddress': address,
-                      'toTokenAddress': to_address,
-                      'amount': str(10**18)
-            }
-            r = requests.get(url, params=params)
+            url = 'https://api.1inch.dev/price/v1.1/1/' + address
+            params = {}
+            if usd:
+                params['currency'] = 'USD'
+            headers = {'accept': 'application/json',
+                      'Authorization': f'Bearer {oneinch_api_key}'}
+            r = requests.get(url, params=params, headers=headers)
             d = json.loads(r.text)
-            return float(d['toTokenAmount'])/float(d['fromTokenAmount'])
-            #print(d)
+            print(d)
+            if usd:
+                return float(d[address])
+            else:
+                return float(d[address])/10**18
         except:
+            raise
             #try backup oracle
+            if usd:
+                to_address = self.usdt_address
+            else:
+                to_address = self.weth_address
             to_address = Web3.toChecksumAddress(to_address)
             address = Web3.toChecksumAddress(address)
             ratio = self.oracle.functions.getRate(address, to_address, True).call()
@@ -46,9 +54,7 @@ class Oracle():
             return ratio
 
     def get_usd_price(self, address):
-        price = self.get_ratio(address, self.usdt_address)
-        price = price * 10**12
-        #print(price)
+        price = self.get_ratio(address, usd=True)
         return price
 
     async def loop(self):
@@ -56,13 +62,16 @@ class Oracle():
             #print('getting swaps')
             try:
                 ratio = self.get_ratio(self.new_rpl_address)
-                eth_price = self.get_usd_price(self.weth_address)
-                reth_ratio = self.get_ratio(self.reth_address)
-                self.redis.set('eth', eth_price)
-                self.redis.set('reth', reth_ratio)
                 self.redis.set('ratio', ratio)
+                await asyncio.sleep(2)
+                eth_price = self.get_usd_price(self.weth_address)
+                self.redis.set('eth', eth_price)
+                await asyncio.sleep(2)
+                reth_ratio = self.get_ratio(self.reth_address)
+                self.redis.set('reth', reth_ratio)
             except:
                 print('Error')
+                raise
                 pass
             await asyncio.sleep(60)
 
