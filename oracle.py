@@ -35,13 +35,11 @@ class Oracle():
                       'Authorization': f'Bearer {oneinch_api_key}'}
             r = requests.get(url, params=params, headers=headers)
             d = json.loads(r.text)
-            print(d)
             if usd:
                 return float(d[address])
             else:
                 return float(d[address])/10**18
         except:
-            raise
             #try backup oracle
             if usd:
                 to_address = self.usdt_address
@@ -71,7 +69,6 @@ class Oracle():
                 self.redis.set('reth', reth_ratio)
             except:
                 print('Error')
-                raise
                 pass
             await asyncio.sleep(60)
 
