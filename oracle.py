@@ -60,10 +60,14 @@ class Oracle():
             #print('getting swaps')
             try:
                 ratio = self.get_ratio(self.new_rpl_address)
-                self.redis.set('ratio', ratio)
+                if ratio:
+                    self.redis.set('ratio', ratio)
+                else:
+                    print('zero')
                 await asyncio.sleep(2)
                 eth_price = self.get_usd_price(self.weth_address)
-                self.redis.set('eth', eth_price)
+                if eth_price:
+                    self.redis.set('eth', eth_price)
                 await asyncio.sleep(2)
                 reth_ratio = self.get_ratio(self.reth_address)
                 self.redis.set('reth', reth_ratio)
