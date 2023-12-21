@@ -314,7 +314,9 @@ class Unibot(commands.Cog):
                 "I'd rather you /rpit'd me", r'¯\_(ツ)_/¯', 'DO IT!', 'Ask the folks in #trading, they know this kind of stuff',
                 'Why are you still here? Go check your grafana.', "Before Maker, that's for sure...",
                 'Not right now, Kron is watching.', 'Why are you asking me? Ask Joe!', "After we complete Vitalik's roadmap",
-                'Let me call Vitalik for you.', 'A long time ago.', 'Soon.', 'Very soon.', 'Need to finish audits first.', 'After $10k ETH.', 'After $1k RPL.']
+                'Let me call Vitalik for you.', 'A long time ago.', 'Soon.', 'Very soon.', 'Need to finish audits first.', 'After $10k ETH.', 'After $1k RPL.',
+                'Next last time to buy RPL below $20.', 'Next last time to buy ETH below $2k.', 'Right before a 500 ETH Smoothing Pool proposal.',
+                'After ETH Denver.', 'After Solana flippening.']
         msg = choice(answers)
         print(msg, now)
         return await ctx.send(msg)
@@ -328,9 +330,10 @@ class Unibot(commands.Cog):
         period = (28 * 86400)
         n = floor((ts - start)/period)
         period_ts = start + (period * n)
+        period_n = n - 7
         next_period_ts = start + (period * (n + 1))
-        embed.add_field(name='Current rewards period start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
-        embed.add_field(name='Next rewards period start', value=f'<t:{next_period_ts}>(<t:{next_period_ts}:R>)', inline=False)
+        embed.add_field(name=f'Rewards period {period_n} start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
+        embed.add_field(name=f'Rewards period {period_n + 1} start', value=f'<t:{next_period_ts}>(<t:{next_period_ts}:R>)', inline=False)
         embed.set_footer(text='All dates are displayed in your local timezone.')
         return await ctx.send(embed=embed)
 
