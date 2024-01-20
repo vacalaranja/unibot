@@ -47,8 +47,12 @@ class Oracle():
                 to_address = self.weth_address
             to_address = Web3.toChecksumAddress(to_address)
             address = Web3.toChecksumAddress(address)
-            ratio = self.oracle.functions.getRate(address, to_address, True).call()
-            ratio = ratio / 10**18
+            if usd:
+                ratio = self.oracle.functions.getRate(address, to_address, True).call()
+                ratio = ratio/10**6
+            else:
+                ratio = self.oracle.functions.getRateToEth(address, True).call()
+                ratio = ratio/10**18
             return ratio
 
     def get_usd_price(self, address):
@@ -66,7 +70,7 @@ class Oracle():
                     print('zero')
                 await asyncio.sleep(2)
                 eth_price = self.get_usd_price(self.weth_address)
-                if eth_price:
+                if eth_price > 1:
                     self.redis.set('eth', eth_price)
                 await asyncio.sleep(2)
                 reth_ratio = self.get_ratio(self.reth_address)
