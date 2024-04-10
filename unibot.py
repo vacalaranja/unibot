@@ -331,9 +331,11 @@ class Unibot(commands.Cog):
         n = floor((ts - start)/period)
         period_ts = start + (period * n)
         period_n = n - 7
+        houston = 1716768000
         next_period_ts = start + (period * (n + 1))
         embed.add_field(name=f'Rewards period {period_n} start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
         embed.add_field(name=f'Rewards period {period_n + 1} start', value=f'<t:{next_period_ts}>(<t:{next_period_ts}:R>)', inline=False)
+        embed.add_field(name='Houston RP upgrade', value=f'<t:{houston}:D>(<t:{houston}:R>)', inline=False)
         embed.set_footer(text='All dates are displayed in your local timezone.')
         return await ctx.send(embed=embed)
 
