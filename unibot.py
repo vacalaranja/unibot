@@ -277,6 +277,9 @@ class Unibot(commands.Cog):
         self.disable = True
         title = "Rocket Pool Investment Theses"
         embed = discord.Embed(title=title, description='',color=discord.Color.orange())
+
+        embed.add_field(name="Tokenomics rework", value='[RPIP-49](https://rpips.rocketpool.net/RPIPs/RPIP-49)', inline=False)
+
         embed.add_field(name="Xer0's RPIT 1.0", value='[Reddit link](https://www.reddit.com/r/ethfinance/comments/m3pug8/the_rocket_pool_investment_thesis/)')
         embed.add_field(name="Xer0's RPIT 2.0", value= '[Reddit link](https://www.reddit.com/r/ethfinance/comments/qwbb8w/rocket_pool_investment_thesis_20/)')
         embed.add_field(name="Boodle's RPIT 3.0", value= '[Reddit link](https://www.reddit.com/r/ethfinance/comments/m4jj0i/rocketpool_investment_thesis_round_3/)', inline=False)
@@ -331,7 +334,7 @@ class Unibot(commands.Cog):
         n = floor((ts - start)/period)
         period_ts = start + (period * n)
         period_n = n - 7
-        houston = 1716768000
+        houston = 1718625600
         next_period_ts = start + (period * (n + 1))
         embed.add_field(name=f'Rewards period {period_n} start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
         embed.add_field(name=f'Rewards period {period_n + 1} start', value=f'<t:{next_period_ts}>(<t:{next_period_ts}:R>)', inline=False)
