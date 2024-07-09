@@ -77,7 +77,7 @@ class Oracle():
                 self.redis.set('reth', reth_ratio)
             except:
                 print('Error')
-                pass
+                raise
             await asyncio.sleep(60)
 
 if __name__ == '__main__':

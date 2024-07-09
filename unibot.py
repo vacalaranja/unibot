@@ -16,10 +16,10 @@ from cex import Cex
 intents = discord.Intents.default()
 client = discord.Client(intents=intents)
 bot = commands.Bot(command_prefix='/', intents=intents)
-SLEEP_DURATION = 2 # Sleep every loop (in seconds)
-ath_file = os.getenv('ATH_FILE')
 discord_bot_key = os.getenv('TOKEN')
-dex_api_key = os.getenv('DEX')
+SLEEP_DURATION = 2 # Sleep every loop (in seconds)
+ATH_FILE = os.getenv('ATH_FILE')
+DEX_API_KEY = os.getenv('DEX')
 
 class Unibot(commands.Cog):
 
@@ -30,7 +30,7 @@ class Unibot(commands.Cog):
         self.zeroes = 10**18
         self.loop_counter = 0
         self.sleep_duration = SLEEP_DURATION
-        self._ath = self.load_ath()
+        self.load_ath()
         self.disable = True
         self.new_rpl_address = NEW_TOKEN_ADDRESS
         self.cex = Cex()
@@ -42,31 +42,31 @@ class Unibot(commands.Cog):
         self.loop.start()
 
     def load_ath(self):
-        with open(ath_file) as f:
-            d = f.readlines()
-            ath, ath_ts = d[0].strip().split()
-            usd_ath, usd_ath_ts = d[1].strip().split()
-            return [[float(ath), int(ath_ts)], [float(usd_ath), int(usd_ath_ts)]]
+        '''self._ath = {'ath': float(ath), 'ath_ts': int(ath_ts),
+                'usd_ath': float(usd_ath), 'usd_ath_ts': int(usd_ath_ts),
+                'atl': float(atl), 'atl_ts': int(atl_ts),
+                'usd_atl': float(usd_atl), 'usd_atl_ts': int(usd_atl_ts)}'''
+        with open(ATH_FILE, 'rb') as f:
+            self._ath = pickle.load(f)
 
     def save_ath(self):
-        with open(ath_file, 'w') as f:
-            for l in self._ath:
-                f.write(' '.join([str(n) for n in l]) + '\n')
+        with open(ATH_FILE, 'wb') as f:
+            pickle.dump(self._ath, f)
 
     @commands.command()
     async def ath(self, ctx, *args):
-        if args and (str(ctx.author) == 'waqwaqattack#7706' or str(ctx.author) == 'vacalaranja#8816'):
+        if args and (ctx.author.id == 764676584832761878 or ctx.author.id == 420306546145361922): #waqwaqattack|vacalaranja
             try:
                 new_ath = float(args[0])
                 embed = discord.Embed(title='New ATH', description='', color=discord.Color.from_rgb(255,255,255))
                 if new_ath > 50: # USD
-                    self._ath[1][0] = new_ath
-                    self._ath[1][1] = int(datetime.now().timestamp())
-                    embed.add_field(name='New USD ATH:', value=f'{self._ath[1][0]}', inline=False)
+                    self._ath['usd_ath'] = new_ath
+                    self._ath['usd_ath_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New USD ATH:', value=f"{self._ath['usd_ath']}", inline=False)
                 else: # Ratio
-                    self._ath[0][0] = new_ath
-                    self._ath[0][1] = int(datetime.now().timestamp())
-                    embed.add_field(name='New ATH ratio:', value=f'{self._ath[0][0]}', inline=False)
+                    self._ath['ath'] = new_ath
+                    self._ath['ath_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New ATH ratio:', value=f"{self._ath['ath']}", inline=False)
                 self.save_ath()
                 embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
                 for ctx in self.ctx.values(): #send to all servers
@@ -76,11 +76,41 @@ class Unibot(commands.Cog):
                 return await ctx.send('Error updating ATH.')
         else:
             embed = discord.Embed(title='ATH', description='', color=discord.Color.from_rgb(255,255,255))
-            embed.add_field(name='Current ATH ratio:', value=f'{self._ath[0][0]}', inline=False)
-            embed.add_field(name='Last updated ATH ratio:', value=f'<t:{self._ath[0][1]}:D>', inline=False)
-            embed.add_field(name='Current USD ATH:', value=f'{self._ath[1][0]}', inline=False)
-            embed.add_field(name='Last updated USD ATH:', value=f'<t:{self._ath[1][1]}:D>', inline=False)
+            embed.add_field(name='Current ATH ratio:', value=f"{self._ath['ath']}", inline=False)
+            embed.add_field(name='Last updated ATH ratio:', value=f"<t:{self._ath['ath_ts']}:D>", inline=False)
+            embed.add_field(name='Current USD ATH:', value=f"{self._ath['usd_ath']}", inline=False)
+            embed.add_field(name='Last updated USD ATH:', value=f"<t:{self._ath['usd_ath_ts']}:D>", inline=False)
             embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
+            return await ctx.send(embed=embed)
+
+    @commands.command()
+    async def atl(self, ctx, *args):
+        if args and (ctx.author.id == 851524243861536819 or ctx.author.id == 420306546145361922): #ramana|vacalaranja
+            try:
+                new_atl = float(args[0])
+                embed = discord.Embed(title='New ATL', description='', color=discord.Color.from_rgb(255,255,255))
+                if new_atl > 1: # USD
+                    self._ath['usd_atl'] = new_atl
+                    self._ath['usd_atl_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New USD ATL:', value=f"{self._ath['usd_atl']}", inline=False)
+                else: # Ratio
+                    self._ath['atl'] = new_atl
+                    self._ath['atl_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New ATL ratio:', value=f"{self._atl['atl']}", inline=False)
+                self.save_ath()
+                embed.set_footer(text='Ramana is keeper of the ATL.')
+                for ctx in self.ctx.values(): #send to all servers
+                    await ctx.send(embed=embed)
+
+            except ValueError:
+                return await ctx.send('Error updating ATL.')
+        else:
+            embed = discord.Embed(title='ATL', description='', color=discord.Color.from_rgb(255,255,255))
+            embed.add_field(name='Current ATL ratio*:', value=f"{self._ath['atl']}", inline=False)
+            embed.add_field(name='Last updated ATL ratio:', value=f"<t:{self._ath['atl_ts']}:D>", inline=False)
+            embed.add_field(name='Current USD ATL*:', value=f"{self._ath['usd_atl']}", inline=False)
+            embed.add_field(name='Last updated USD ATL:', value=f"<t:{self._ath['usd_atl_ts']}:D>", inline=False)
+            embed.set_footer(text='Ramana is keeper of the ATL.\n*Since ATH')
             return await ctx.send(embed=embed)
 
     @commands.command()
@@ -173,7 +203,7 @@ class Unibot(commands.Cog):
     async def dex(self, ctx):
         try:
             url = f'https://api.dev.dex.guru/v1/chain/1/tokens/{self.new_rpl_address}/market'
-            r = requests.get(url, params={'api-key':dex_api_key})
+            r = requests.get(url, params={'api-key':DEX_API_KEY})
             result = json.loads(r.text)
             keys = {"volume_24h": 'Volume',
                 "liquidity": 'Liquidity',
