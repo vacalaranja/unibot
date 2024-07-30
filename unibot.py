@@ -96,7 +96,7 @@ class Unibot(commands.Cog):
                 else: # Ratio
                     self._ath['atl'] = new_atl
                     self._ath['atl_ts'] = int(datetime.now().timestamp())
-                    embed.add_field(name='New ATL ratio:', value=f"{self._atl['atl']}", inline=False)
+                    embed.add_field(name='New ATL ratio:', value=f"{self._ath['atl']}", inline=False)
                 self.save_ath()
                 embed.set_footer(text='Ramana is keeper of the ATL.')
                 for ctx in self.ctx.values(): #send to all servers
