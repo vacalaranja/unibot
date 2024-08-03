@@ -121,6 +121,12 @@ class Unibot(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
+    async def update_ath(self, ctx):
+        self.load_ath()
+        return await ctx.send(f'ATH updated.')
+
+    @commands.command()
+    @commands.is_owner()
     async def cex_time(self, ctx, new_time):
         self._cex_time = int(new_time)
         return await ctx.send(f'Cex updates interval set to {new_time}s')
