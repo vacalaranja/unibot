@@ -355,7 +355,7 @@ class Unibot(commands.Cog):
                 'Not right now, Kron is watching.', 'Why are you asking me? Ask Joe!', "After we complete Vitalik's roadmap",
                 'Let me call Vitalik for you.', 'A long time ago.', 'Soon.', 'Very soon.', 'Need to finish audits first.', 'After $10k ETH.', 'After $1k RPL.',
                 'Next last time to buy RPL below $20.', 'Next last time to buy ETH below $2k.', 'Right before a 500 ETH Smoothing Pool proposal.',
-                'After ETH Denver.', 'After Solana flippening.']
+                'After ETH Denver.', 'After Solana flippening.', 'After MEEK initializes their vote power.']
         msg = choice(answers)
         print(msg, now)
         return await ctx.send(msg)
