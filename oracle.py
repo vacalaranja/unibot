@@ -19,6 +19,7 @@ class Oracle():
         self.weth_address = WETH_ADDRESS
         self.usdt_address = USDT_ADDRESS
         self.reth_address = RETH_ADDRESS
+        self.wbtc_address = WBTC_ADDRESS
         self.new_rpl_address = NEW_TOKEN_ADDRESS
         self.redis = redis.StrictRedis(charset='utf-8', decode_responses=True)
         with open('oracle_abi.json') as f:
@@ -75,6 +76,9 @@ class Oracle():
                 await asyncio.sleep(2)
                 reth_ratio = self.get_ratio(self.reth_address)
                 self.redis.set('reth', reth_ratio)
+                wbtc_ratio = self.get_ratio(self.wbtc_address)
+                wbtc_ratio = 10**10/wbtc_ratio
+                self.redis.set('wbtc', wbtc_ratio)
             except:
                 print('Error')
             await asyncio.sleep(60)

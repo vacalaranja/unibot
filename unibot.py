@@ -38,6 +38,7 @@ class Unibot(commands.Cog):
         self.latest_ratio = float(self.redis.get('ratio').decode('utf-8'))
         self.latest_eth_price = float(self.redis.get('eth').decode('utf-8'))
         self.latest_reth_ratio = float(self.redis.get('reth').decode('utf-8'))
+        self.latest_wbtc_ratio = float(self.redis.get('wbtc').decode('utf-8'))
         self.last_updated = int(datetime.now().timestamp())
         self.loop.start()
 
@@ -154,6 +155,7 @@ class Unibot(commands.Cog):
             self.latest_ratio = float(self.redis.get('ratio').decode('utf-8'))
             self.latest_eth_price = float(self.redis.get('eth').decode('utf-8'))
             self.latest_reth_ratio = float(self.redis.get('reth').decode('utf-8'))
+            self.latest_wbtc_ratio = float(self.redis.get('wbtc').decode('utf-8'))
             self.last_updated = int(datetime.now().timestamp())
             #print(self.latest_ratio, self.latest_eth_price)
             done = True
@@ -188,10 +190,10 @@ class Unibot(commands.Cog):
         embed = discord.Embed(title=title, description=f'',color=discord.Color.orange())
         embed.add_field(name='8 ETH Minipools\n', value=f'\n', inline=False)
         embed.add_field(name='10% (2.4 ETH)', value=f'{2.4/self.latest_ratio:,.2f} RPL')
-        embed.add_field(name='150% (12 ETH)', value=f'{12/self.latest_ratio:,.2f} RPL')
-        embed.add_field(name='16 ETH Minipools\n', value=f'\n', inline=False)
-        embed.add_field(name='10% (1.6 ETH)', value=f'{1.6/self.latest_ratio:,.2f} RPL')
-        embed.add_field(name='150% (24 ETH)', value=f'{24/self.latest_ratio:,.2f} RPL')
+        embed.add_field(name='15% (3.6 ETH)', value=f'{3.6/self.latest_ratio:,.2f} RPL')
+#        embed.add_field(name='16 ETH Minipools\n', value=f'\n', inline=False)
+#        embed.add_field(name='10% (1.6 ETH)', value=f'{1.6/self.latest_ratio:,.2f} RPL')
+#        embed.add_field(name='150% (24 ETH)', value=f'{24/self.latest_ratio:,.2f} RPL')
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         await ctx.send(embed=embed)
 
@@ -283,6 +285,7 @@ class Unibot(commands.Cog):
         embed.add_field(name='RPL/USD', value=f'${usd_price:,.3f}')
         embed.add_field(name='ETH/USD', value=f'${self.latest_eth_price:,.2f}')
         embed.add_field(name='rETH/ETH', value=f'{self.latest_reth_ratio:,.5f}')
+        embed.add_field(name='ETH/WBTC', value=f'{self.latest_wbtc_ratio:,.7f}')
         embed.add_field(name='Last Updated', value=f'<t:{timestamp}>')
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         await ctx.send(embed=embed)
