@@ -46,7 +46,9 @@ class Unibot(commands.Cog):
         '''self._ath = {'ath': float(ath), 'ath_ts': int(ath_ts),
                 'usd_ath': float(usd_ath), 'usd_ath_ts': int(usd_ath_ts),
                 'atl': float(atl), 'atl_ts': int(atl_ts),
-                'usd_atl': float(usd_atl), 'usd_atl_ts': int(usd_atl_ts)}'''
+                'usd_atl': float(usd_atl), 'usd_atl_ts': int(usd_atl_ts),
+                'athsl': float(athsl), 'athsl_ts': int(athsl_ts),
+                'usd_athsl': float(usd_athsl), 'usd_athsl_ts': int(usd_athsl_ts),}'''
         with open(ATH_FILE, 'rb') as f:
             self._ath = pickle.load(f)
 
@@ -82,6 +84,37 @@ class Unibot(commands.Cog):
             embed.add_field(name='Current USD ATH:', value=f"{self._ath['usd_ath']}", inline=False)
             embed.add_field(name='Last updated USD ATH:', value=f"<t:{self._ath['usd_ath_ts']}:D>", inline=False)
             embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
+            return await ctx.send(embed=embed)
+
+    @commands.command()
+    async def athsl(self, ctx, *args):
+        print(self._ath)
+        if args and (ctx.author.id == 764676584832761878 or ctx.author.id == 420306546145361922): #waqwaqattack|vacalaranja
+            try:
+                new_athsl = float(args[0])
+                embed = discord.Embed(title='New ATH Since ATL', description='', color=discord.Color.from_rgb(255,255,255))
+                if new_athsl > 1: # USD
+                    self._ath['usd_athsl'] = new_athsl
+                    self._ath['usd_athsl_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New USD ATH Since ATL:', value=f"{self._ath['usd_athsl']}", inline=False)
+                else: # Ratio
+                    self._ath['athsl'] = new_athsl
+                    self._ath['athsl_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New ATH Since ATL ratio:', value=f"{self._ath['athsl']}", inline=False)
+                self.save_ath()
+                embed.set_footer(text='Waqwaqattack is keeper of the ATH Since ATL.')
+                for ctx in self.ctx.values(): #send to all servers
+                    await ctx.send(embed=embed)
+
+            except ValueError:
+                return await ctx.send('Error updating ATH Since ATL.')
+        else:
+            embed = discord.Embed(title='ATH Since ATL', description='', color=discord.Color.from_rgb(255,255,255))
+            embed.add_field(name='Current ATH Since ATL  ratio:', value=f"{self._ath['athsl']}", inline=False)
+            embed.add_field(name='Last updated ATH Since ATL ratio:', value=f"<t:{self._ath['athsl_ts']}:D>", inline=False)
+            embed.add_field(name='Current USD ATH Since ATL:', value=f"{self._ath['usd_athsl']}", inline=False)
+            embed.add_field(name='Last updated USD ATH Since ATL:', value=f"<t:{self._ath['usd_athsl_ts']}:D>", inline=False)
+            embed.set_footer(text='Waqwaqattack is keeper of the ATH Since ATL.')
             return await ctx.send(embed=embed)
 
     @commands.command()
