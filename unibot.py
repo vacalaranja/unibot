@@ -88,7 +88,6 @@ class Unibot(commands.Cog):
 
     @commands.command()
     async def athsl(self, ctx, *args):
-        print(self._ath)
         if args and (ctx.author.id == 764676584832761878 or ctx.author.id == 420306546145361922): #waqwaqattack|vacalaranja
             try:
                 new_athsl = float(args[0])
@@ -109,10 +108,12 @@ class Unibot(commands.Cog):
             except ValueError:
                 return await ctx.send('Error updating ATH Since ATL.')
         else:
+            percent_ratio = (self._ath['athsl'] / self._ath['atl']) - 1
+            percent_usd = (self._ath['usd_athsl'] / self._ath['usd_atl']) - 1
             embed = discord.Embed(title='ATH Since ATL', description='', color=discord.Color.from_rgb(255,255,255))
-            embed.add_field(name='Current ATH Since ATL  ratio:', value=f"{self._ath['athsl']}", inline=False)
+            embed.add_field(name='Current ATH Since ATL ratio:', value=f"{self._ath['athsl']} ({percent_ratio:.2%})", inline=False)
             embed.add_field(name='Last updated ATH Since ATL ratio:', value=f"<t:{self._ath['athsl_ts']}:D>", inline=False)
-            embed.add_field(name='Current USD ATH Since ATL:', value=f"{self._ath['usd_athsl']}", inline=False)
+            embed.add_field(name='Current USD ATH Since ATL:', value=f"{self._ath['usd_athsl']} ({percent_usd:.2%})", inline=False)
             embed.add_field(name='Last updated USD ATH Since ATL:', value=f"<t:{self._ath['usd_athsl_ts']}:D>", inline=False)
             embed.set_footer(text='Waqwaqattack is keeper of the ATH Since ATL.')
             return await ctx.send(embed=embed)
@@ -139,10 +140,12 @@ class Unibot(commands.Cog):
             except ValueError:
                 return await ctx.send('Error updating ATL.')
         else:
+            percent_ratio = (self._ath['ath'] - self._ath['atl'])/ self._ath['ath']
+            percent_usd = (self._ath['usd_ath'] - self._ath['usd_atl']) / self._ath['usd_ath']
             embed = discord.Embed(title='ATL', description='', color=discord.Color.from_rgb(255,255,255))
-            embed.add_field(name='Current ATL ratio*:', value=f"{self._ath['atl']}", inline=False)
+            embed.add_field(name='Current ATL ratio*:', value=f"{self._ath['atl']} (-{percent_ratio:.2%})", inline=False)
             embed.add_field(name='Last updated ATL ratio:', value=f"<t:{self._ath['atl_ts']}:D>", inline=False)
-            embed.add_field(name='Current USD ATL*:', value=f"{self._ath['usd_atl']}", inline=False)
+            embed.add_field(name='Current USD ATL*:', value=f"{self._ath['usd_atl']} (-{percent_usd:.2%})", inline=False)
             embed.add_field(name='Last updated USD ATL:', value=f"<t:{self._ath['usd_atl_ts']}:D>", inline=False)
             embed.set_footer(text='Ramana is keeper of the ATL.\n*Since ATH')
             return await ctx.send(embed=embed)
