@@ -78,10 +78,13 @@ class Unibot(commands.Cog):
             except ValueError:
                 return await ctx.send('Error updating ATH.')
         else:
+            current_usd = self.latest_ratio * self.latest_eth_price
+            percent_ratio = self._ath['ath'] / self.latest_ratio
+            percent_usd = self._ath['usd_ath'] / current_usd
             embed = discord.Embed(title='ATH', description='', color=discord.Color.from_rgb(255,255,255))
-            embed.add_field(name='Current ATH ratio:', value=f"{self._ath['ath']}", inline=False)
+            embed.add_field(name='Current ATH ratio:', value=f"{self._ath['ath']} ({percent_ratio:.2%} to go)", inline=False)
             embed.add_field(name='Last updated ATH ratio:', value=f"<t:{self._ath['ath_ts']}:D>", inline=False)
-            embed.add_field(name='Current USD ATH:', value=f"{self._ath['usd_ath']}", inline=False)
+            embed.add_field(name='Current USD ATH:', value=f"{self._ath['usd_ath']} ({percent_usd:.2%} to go)", inline=False)
             embed.add_field(name='Last updated USD ATH:', value=f"<t:{self._ath['usd_ath_ts']}:D>", inline=False)
             embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
             return await ctx.send(embed=embed)
