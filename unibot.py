@@ -4,6 +4,7 @@ import json
 import discord
 import pickle
 import redis
+from typing import Optional
 
 from math import floor
 from discord.ext import tasks, commands
@@ -14,7 +15,7 @@ from constants import *
 from cex import Cex
 
 intents = discord.Intents.default()
-client = discord.Client(intents=intents)
+intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 discord_bot_key = os.getenv('TOKEN')
 SLEEP_DURATION = 2 # Sleep every loop (in seconds)
@@ -56,11 +57,10 @@ class Unibot(commands.Cog):
         with open(ATH_FILE, 'wb') as f:
             pickle.dump(self._ath, f)
 
-    @commands.command()
-    async def ath(self, ctx, *args):
-        if args and (ctx.author.id == 764676584832761878 or ctx.author.id == 420306546145361922): #waqwaqattack|vacalaranja
+    @commands.hybrid_command()
+    async def ath(self, ctx, new_ath: Optional[float] = None):
+        if (new_ath is not None) and (ctx.author.id in {764676584832761878, 420306546145361922}): #waqwaqattack|vacalaranja
             try:
-                new_ath = float(args[0])
                 embed = discord.Embed(title='New ATH', description='', color=discord.Color.from_rgb(255,255,255))
                 if new_ath > 50: # USD
                     self._ath['usd_ath'] = new_ath
@@ -89,11 +89,10 @@ class Unibot(commands.Cog):
             embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
             return await ctx.send(embed=embed)
 
-    @commands.command()
-    async def athsl(self, ctx, *args):
-        if args and (ctx.author.id == 764676584832761878 or ctx.author.id == 420306546145361922): #waqwaqattack|vacalaranja
+    @commands.hybrid_command()
+    async def athsl(self, ctx, new_athsl: Optional[float] = None):
+        if (new_athsl is not None) and (ctx.author.id in {764676584832761878, 420306546145361922}): #waqwaqattack|vacalaranja
             try:
-                new_athsl = float(args[0])
                 embed = discord.Embed(title='New ATH Since ATL', description='', color=discord.Color.from_rgb(255,255,255))
                 if new_athsl > 1: # USD
                     self._ath['usd_athsl'] = new_athsl
@@ -121,11 +120,10 @@ class Unibot(commands.Cog):
             embed.set_footer(text='Waqwaqattack is keeper of the ATH Since ATL.')
             return await ctx.send(embed=embed)
 
-    @commands.command()
-    async def atl(self, ctx, *args):
-        if args and (ctx.author.id == 851524243861536819 or ctx.author.id == 420306546145361922): #ramana|vacalaranja
+    @commands.hybrid_command()
+    async def atl(self, ctx, new_atl: Optional[float] = None):
+        if (new_atl is not None) and (ctx.author.id in {851524243861536819, 420306546145361922}): #ramana|vacalaranja
             try:
-                new_atl = float(args[0])
                 embed = discord.Embed(title='New ATL', description='', color=discord.Color.from_rgb(255,255,255))
                 if new_atl > 1: # USD
                     self._ath['usd_atl'] = new_atl
@@ -222,7 +220,7 @@ class Unibot(commands.Cog):
             self.redis.set('cex_request', 1)
             self.loop_counter = 0
 
-    @commands.command()
+    @commands.hybrid_command()
     async def collateral(self, ctx):
         #return 1.6 ETH in RPL (10%) and 24 ETH in RPL (150%) collateral rates.
         title = 'Collateral'
@@ -236,17 +234,17 @@ class Unibot(commands.Cog):
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def kraken(self, ctx):
         embed = self.cex.kraken()
         await ctx.send(embed=embed)
 
-    @commands.command()
-    async def coinbase(self, ctx, pair='RPL-USD'):
+    @commands.hybrid_command()
+    async def coinbase(self, ctx, pair: str = 'RPL-USD'):
         embed = self.cex.coinbase(pair)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def dex(self, ctx):
         try:
             url = f'https://api.dev.dex.guru/v1/chain/1/tokens/{self.new_rpl_address}/market'
@@ -286,7 +284,7 @@ class Unibot(commands.Cog):
         except:
             return await ctx.send('Too many requests')
 
-    @commands.command()
+    @commands.hybrid_command()
     async def jam(self, ctx):
         today = datetime.today().date()
         if today.month == 4 and today.day == 1:
@@ -306,11 +304,11 @@ class Unibot(commands.Cog):
             video = 'https://www.youtube.com/watch?v=Wmo_XbLjVZs' #jam
         return await ctx.send(video)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def catjam(self, ctx):
         return await ctx.send('https://www.youtube.com/watch?v=a9f8rxdpmb0')
 
-    @commands.command()
+    @commands.hybrid_command()
     async def ratio(self, ctx):
         #print('ratio')
         if self.disable:
@@ -329,7 +327,7 @@ class Unibot(commands.Cog):
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def smoigel(self, ctx):
         if self.disable:
             return await ctx.send('too many requests')
@@ -348,7 +346,7 @@ class Unibot(commands.Cog):
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def rpit(self, ctx):
         if self.disable:
             return await ctx.send('too many requests')
@@ -377,15 +375,15 @@ class Unibot(commands.Cog):
         embed.add_field(name="Hanniabu's Theses Collection", value= '[Community site](https://fervent-curie-5c2bfc.netlify.app/thesis/)', inline=False)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def stop(self, ctx):
         return await ctx.send('Hammer time!')
 
-    @commands.command()
+    @commands.hybrid_command()
     async def waqboard(self, ctx):
         return await ctx.send('https://docs.google.com/spreadsheets/d/18T5w_w9uf6eOy5tt3GDNLFjNp7pr__1Z9IaW4RBCAQY/')
 
-    @commands.command()
+    @commands.hybrid_command()
     async def wen(self, ctx):
         now = datetime.now()
         answers = ['In the not-too-distant future.', 'Yesterday.', 'Tonight.',
@@ -403,7 +401,7 @@ class Unibot(commands.Cog):
         print(msg, now)
         return await ctx.send(msg)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def when(self, ctx):
         embed = discord.Embed(title='When?', description='', color=discord.Color.from_rgb(255,150,150))
         #embed.add_field(name='First rewards period start', value='<t:1637818539>', inline=False) #1635399339 + 28×86400
@@ -427,11 +425,18 @@ async def shutdown(ctx):
     unibot.remove_ctx(ctx)
     print('removed from ', ctx.guild)
 
-@client.event
-async def on_ready():
-  print('We have logged in as {0.user}'.format(client))
+@bot.event
+async def setup_hook():
+    await bot.add_cog(unibot)
 
-@bot.command()
+@bot.event
+async def on_ready():
+    print(f'We have logged in as {bot.user}')
+    await bot.tree.sync()
+    for guild in bot.guilds:
+        await bot.tree.sync(guild=guild)
+
+@bot.hybrid_command()
 async def author(ctx):
     await ctx.send(f'{AUTHOR} {ADDRESS}')
 
@@ -443,5 +448,4 @@ async def start(ctx):
     unibot.add_ctx(ctx)
 
 unibot = Unibot(bot)
-bot.add_cog(unibot)
 bot.run(discord_bot_key)
