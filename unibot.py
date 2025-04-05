@@ -72,11 +72,11 @@ class Unibot(commands.Cog):
                     embed.add_field(name='New ATH ratio:', value=f"{self._ath['ath']}", inline=False)
                 self.save_ath()
                 embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
-                for ctx in self.ctx.values(): #send to all servers
-                    await ctx.send(embed=embed)
-
+                for server_ctx in self.ctx.values(): #send to all servers
+                    await server_ctx.send(embed=embed)
+                return await ctx.send('ATH updated.', ephemeral=True)
             except ValueError:
-                return await ctx.send('Error updating ATH.')
+                return await ctx.send('Error updating ATH.', ephemeral=True)
         else:
             current_usd = self.latest_ratio * self.latest_eth_price
             percent_ratio = self._ath['ath'] / self.latest_ratio
@@ -104,11 +104,11 @@ class Unibot(commands.Cog):
                     embed.add_field(name='New ATH Since ATL ratio:', value=f"{self._ath['athsl']}", inline=False)
                 self.save_ath()
                 embed.set_footer(text='Waqwaqattack is keeper of the ATH Since ATL.')
-                for ctx in self.ctx.values(): #send to all servers
-                    await ctx.send(embed=embed)
-
+                for server_ctx in self.ctx.values(): #send to all servers
+                    await server_ctx.send(embed=embed)
+                return await ctx.send('ATH Since ATL updated.', ephemeral=True)
             except ValueError:
-                return await ctx.send('Error updating ATH Since ATL.')
+                return await ctx.send('Error updating ATH Since ATL.', ephemeral=True)
         else:
             percent_ratio = (self._ath['athsl'] / self._ath['atl']) - 1
             percent_usd = (self._ath['usd_athsl'] / self._ath['usd_atl']) - 1
@@ -135,11 +135,11 @@ class Unibot(commands.Cog):
                     embed.add_field(name='New ATL ratio:', value=f"{self._ath['atl']}", inline=False)
                 self.save_ath()
                 embed.set_footer(text='Ramana is keeper of the ATL.')
-                for ctx in self.ctx.values(): #send to all servers
-                    await ctx.send(embed=embed)
-
+                for server_ctx in self.ctx.values(): #send to all servers
+                    await server_ctx.send(embed=embed)
+                return await ctx.send('ATL updated.', ephemeral=True)
             except ValueError:
-                return await ctx.send('Error updating ATL.')
+                return await ctx.send('Error updating ATL.', ephemeral=True)
         else:
             percent_ratio = (self._ath['ath'] - self._ath['atl'])/ self._ath['ath']
             percent_usd = (self._ath['usd_ath'] - self._ath['usd_atl']) / self._ath['usd_ath']
