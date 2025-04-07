@@ -15,7 +15,7 @@ from constants import *
 
 infura_url = os.getenv('INFURA')
 web3 = Web3(Web3.HTTPProvider(infura_url))
-ns = ENS.fromWeb3(web3)
+ns = ENS.from_web3(web3)
 
 class Requester():
 
@@ -109,6 +109,10 @@ class Requester():
     async def get_swaps(self):
         pairs = [(self.weth_address, self.new_rpl_address)]
         txs = {}
+#        embed = discord.Embed(title='test', description='test', color=discord.Color.from_rgb(0, 0, 256))
+#        embed.add_field(name='test', value='test')
+#        embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
+#        self.redis.rpush('embeds', pickle.dumps(embed))
         for p in pairs:
             swaps = await self.graphql_request(token0=p[0], token1=p[1], min_rpl=self.min_rpl)
             if swaps is None:

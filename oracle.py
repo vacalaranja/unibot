@@ -46,8 +46,8 @@ class Oracle():
                 to_address = self.usdt_address
             else:
                 to_address = self.weth_address
-            to_address = Web3.toChecksumAddress(to_address)
-            address = Web3.toChecksumAddress(address)
+            to_address = Web3.to_checksum_address(to_address)
+            address = Web3.to_checksum_address(address)
             if usd:
                 ratio = self.oracle.functions.getRate(address, to_address, True).call()
                 ratio = ratio/10**6
@@ -81,6 +81,7 @@ class Oracle():
                 self.redis.set('wbtc', wbtc_ratio)
             except:
                 print('Error')
+                raise
             await asyncio.sleep(60)
 
 if __name__ == '__main__':

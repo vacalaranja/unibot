@@ -41,7 +41,6 @@ class Unibot(commands.Cog):
         self.latest_reth_ratio = float(self.redis.get('reth').decode('utf-8'))
         self.latest_wbtc_ratio = float(self.redis.get('wbtc').decode('utf-8'))
         self.last_updated = int(datetime.now().timestamp())
-        self.loop.start()
 
     def load_ath(self):
         '''self._ath = {'ath': float(ath), 'ath_ts': int(ath_ts),
@@ -219,6 +218,10 @@ class Unibot(commands.Cog):
         if not self.loop_counter % int(self._cex_time/self.sleep_duration): #Get kraken and coinbase summary every 'self._cex_time' seconds.
             self.redis.set('cex_request', 1)
             self.loop_counter = 0
+
+    @loop.before_loop
+    async def before_loop(self):
+        await self.bot.wait_until_ready()
 
     @commands.hybrid_command()
     async def collateral(self, ctx):
@@ -446,6 +449,9 @@ async def start(ctx):
     print(ctx.author, ctx.channel)
     print('added to ',  ctx.guild)
     unibot.add_ctx(ctx)
+    if not unibot.loop.is_running():
+        print('starting loop')
+        unibot.loop.start()
 
 unibot = Unibot(bot)
 bot.run(discord_bot_key)
