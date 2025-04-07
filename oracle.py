@@ -19,6 +19,7 @@ class Oracle():
         self.weth_address = WETH_ADDRESS
         self.usdt_address = USDT_ADDRESS
         self.reth_address = RETH_ADDRESS
+        self.wbtc_address = WBTC_ADDRESS
         self.new_rpl_address = NEW_TOKEN_ADDRESS
         self.redis = redis.StrictRedis(charset='utf-8', decode_responses=True)
         with open('oracle_abi.json') as f:
@@ -35,13 +36,11 @@ class Oracle():
                       'Authorization': f'Bearer {oneinch_api_key}'}
             r = requests.get(url, params=params, headers=headers)
             d = json.loads(r.text)
-            print(d)
             if usd:
                 return float(d[address])
             else:
                 return float(d[address])/10**18
         except:
-            raise
             #try backup oracle
             if usd:
                 to_address = self.usdt_address
@@ -49,8 +48,12 @@ class Oracle():
                 to_address = self.weth_address
             to_address = Web3.toChecksumAddress(to_address)
             address = Web3.toChecksumAddress(address)
-            ratio = self.oracle.functions.getRate(address, to_address, True).call()
-            ratio = ratio / 10**18
+            if usd:
+                ratio = self.oracle.functions.getRate(address, to_address, True).call()
+                ratio = ratio/10**6
+            else:
+                ratio = self.oracle.functions.getRateToEth(address, True).call()
+                ratio = ratio/10**18
             return ratio
 
     def get_usd_price(self, address):
@@ -62,17 +65,22 @@ class Oracle():
             #print('getting swaps')
             try:
                 ratio = self.get_ratio(self.new_rpl_address)
-                self.redis.set('ratio', ratio)
+                if ratio:
+                    self.redis.set('ratio', ratio)
+                else:
+                    print('zero')
                 await asyncio.sleep(2)
                 eth_price = self.get_usd_price(self.weth_address)
-                self.redis.set('eth', eth_price)
+                if eth_price > 1:
+                    self.redis.set('eth', eth_price)
                 await asyncio.sleep(2)
                 reth_ratio = self.get_ratio(self.reth_address)
                 self.redis.set('reth', reth_ratio)
+                wbtc_ratio = self.get_ratio(self.wbtc_address)
+                wbtc_ratio = 10**10/wbtc_ratio
+                self.redis.set('wbtc', wbtc_ratio)
             except:
                 print('Error')
-                raise
-                pass
             await asyncio.sleep(60)
 
 if __name__ == '__main__':

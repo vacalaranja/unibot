@@ -4,6 +4,7 @@ import json
 import discord
 import pickle
 import redis
+from typing import Optional
 
 from math import floor
 from discord.ext import tasks, commands
@@ -14,12 +15,12 @@ from constants import *
 from cex import Cex
 
 intents = discord.Intents.default()
-client = discord.Client(intents=intents)
+intents.message_content = True
 bot = commands.Bot(command_prefix='/', intents=intents)
-SLEEP_DURATION = 2 # Sleep every loop (in seconds)
-ath_file = os.getenv('ATH_FILE')
 discord_bot_key = os.getenv('TOKEN')
-dex_api_key = os.getenv('DEX')
+SLEEP_DURATION = 2 # Sleep every loop (in seconds)
+ATH_FILE = os.getenv('ATH_FILE')
+DEX_API_KEY = os.getenv('DEX')
 
 class Unibot(commands.Cog):
 
@@ -30,7 +31,7 @@ class Unibot(commands.Cog):
         self.zeroes = 10**18
         self.loop_counter = 0
         self.sleep_duration = SLEEP_DURATION
-        self._ath = self.load_ath()
+        self.load_ath()
         self.disable = True
         self.new_rpl_address = NEW_TOKEN_ADDRESS
         self.cex = Cex()
@@ -38,49 +39,116 @@ class Unibot(commands.Cog):
         self.latest_ratio = float(self.redis.get('ratio').decode('utf-8'))
         self.latest_eth_price = float(self.redis.get('eth').decode('utf-8'))
         self.latest_reth_ratio = float(self.redis.get('reth').decode('utf-8'))
+        self.latest_wbtc_ratio = float(self.redis.get('wbtc').decode('utf-8'))
         self.last_updated = int(datetime.now().timestamp())
         self.loop.start()
 
     def load_ath(self):
-        with open(ath_file) as f:
-            d = f.readlines()
-            ath, ath_ts = d[0].strip().split()
-            usd_ath, usd_ath_ts = d[1].strip().split()
-            return [[float(ath), int(ath_ts)], [float(usd_ath), int(usd_ath_ts)]]
+        '''self._ath = {'ath': float(ath), 'ath_ts': int(ath_ts),
+                'usd_ath': float(usd_ath), 'usd_ath_ts': int(usd_ath_ts),
+                'atl': float(atl), 'atl_ts': int(atl_ts),
+                'usd_atl': float(usd_atl), 'usd_atl_ts': int(usd_atl_ts),
+                'athsl': float(athsl), 'athsl_ts': int(athsl_ts),
+                'usd_athsl': float(usd_athsl), 'usd_athsl_ts': int(usd_athsl_ts),}'''
+        with open(ATH_FILE, 'rb') as f:
+            self._ath = pickle.load(f)
 
     def save_ath(self):
-        with open(ath_file, 'w') as f:
-            for l in self._ath:
-                f.write(' '.join([str(n) for n in l]) + '\n')
+        with open(ATH_FILE, 'wb') as f:
+            pickle.dump(self._ath, f)
 
-    @commands.command()
-    async def ath(self, ctx, *args):
-        if args and (str(ctx.author) == 'waqwaqattack#7706' or str(ctx.author) == 'vacalaranja#8816'):
+    @commands.hybrid_command()
+    async def ath(self, ctx, new_ath: Optional[float] = None):
+        if (new_ath is not None) and (ctx.author.id in {764676584832761878, 420306546145361922}): #waqwaqattack|vacalaranja
             try:
-                new_ath = float(args[0])
                 embed = discord.Embed(title='New ATH', description='', color=discord.Color.from_rgb(255,255,255))
                 if new_ath > 50: # USD
-                    self._ath[1][0] = new_ath
-                    self._ath[1][1] = int(datetime.now().timestamp())
-                    embed.add_field(name='New USD ATH:', value=f'{self._ath[1][0]}', inline=False)
+                    self._ath['usd_ath'] = new_ath
+                    self._ath['usd_ath_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New USD ATH:', value=f"{self._ath['usd_ath']}", inline=False)
                 else: # Ratio
-                    self._ath[0][0] = new_ath
-                    self._ath[0][1] = int(datetime.now().timestamp())
-                    embed.add_field(name='New ATH ratio:', value=f'{self._ath[0][0]}', inline=False)
+                    self._ath['ath'] = new_ath
+                    self._ath['ath_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New ATH ratio:', value=f"{self._ath['ath']}", inline=False)
                 self.save_ath()
                 embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
-                for ctx in self.ctx.values(): #send to all servers
-                    await ctx.send(embed=embed)
-
+                for server_ctx in self.ctx.values(): #send to all servers
+                    await server_ctx.send(embed=embed)
+                return await ctx.send('ATH updated.', ephemeral=True)
             except ValueError:
-                return await ctx.send('Error updating ATH.')
+                return await ctx.send('Error updating ATH.', ephemeral=True)
         else:
+            current_usd = self.latest_ratio * self.latest_eth_price
+            percent_ratio = self._ath['ath'] / self.latest_ratio
+            percent_usd = self._ath['usd_ath'] / current_usd
             embed = discord.Embed(title='ATH', description='', color=discord.Color.from_rgb(255,255,255))
-            embed.add_field(name='Current ATH ratio:', value=f'{self._ath[0][0]}', inline=False)
-            embed.add_field(name='Last updated ATH ratio:', value=f'<t:{self._ath[0][1]}:D>', inline=False)
-            embed.add_field(name='Current USD ATH:', value=f'{self._ath[1][0]}', inline=False)
-            embed.add_field(name='Last updated USD ATH:', value=f'<t:{self._ath[1][1]}:D>', inline=False)
+            embed.add_field(name='Current ATH ratio:', value=f"{self._ath['ath']} ({percent_ratio:.2%} to go)", inline=False)
+            embed.add_field(name='Last updated ATH ratio:', value=f"<t:{self._ath['ath_ts']}:D>", inline=False)
+            embed.add_field(name='Current USD ATH:', value=f"{self._ath['usd_ath']} ({percent_usd:.2%} to go)", inline=False)
+            embed.add_field(name='Last updated USD ATH:', value=f"<t:{self._ath['usd_ath_ts']}:D>", inline=False)
             embed.set_footer(text='Waqwaqattack is keeper of the ATH.')
+            return await ctx.send(embed=embed)
+
+    @commands.hybrid_command()
+    async def athsl(self, ctx, new_athsl: Optional[float] = None):
+        if (new_athsl is not None) and (ctx.author.id in {764676584832761878, 420306546145361922}): #waqwaqattack|vacalaranja
+            try:
+                embed = discord.Embed(title='New ATH Since ATL', description='', color=discord.Color.from_rgb(255,255,255))
+                if new_athsl > 1: # USD
+                    self._ath['usd_athsl'] = new_athsl
+                    self._ath['usd_athsl_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New USD ATH Since ATL:', value=f"{self._ath['usd_athsl']}", inline=False)
+                else: # Ratio
+                    self._ath['athsl'] = new_athsl
+                    self._ath['athsl_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New ATH Since ATL ratio:', value=f"{self._ath['athsl']}", inline=False)
+                self.save_ath()
+                embed.set_footer(text='Waqwaqattack is keeper of the ATH Since ATL.')
+                for server_ctx in self.ctx.values(): #send to all servers
+                    await server_ctx.send(embed=embed)
+                return await ctx.send('ATH Since ATL updated.', ephemeral=True)
+            except ValueError:
+                return await ctx.send('Error updating ATH Since ATL.', ephemeral=True)
+        else:
+            percent_ratio = (self._ath['athsl'] / self._ath['atl']) - 1
+            percent_usd = (self._ath['usd_athsl'] / self._ath['usd_atl']) - 1
+            embed = discord.Embed(title='ATH Since ATL', description='', color=discord.Color.from_rgb(255,255,255))
+            embed.add_field(name='Current ATH Since ATL ratio:', value=f"{self._ath['athsl']} ({percent_ratio:.2%})", inline=False)
+            embed.add_field(name='Last updated ATH Since ATL ratio:', value=f"<t:{self._ath['athsl_ts']}:D>", inline=False)
+            embed.add_field(name='Current USD ATH Since ATL:', value=f"{self._ath['usd_athsl']} ({percent_usd:.2%})", inline=False)
+            embed.add_field(name='Last updated USD ATH Since ATL:', value=f"<t:{self._ath['usd_athsl_ts']}:D>", inline=False)
+            embed.set_footer(text='Waqwaqattack is keeper of the ATH Since ATL.')
+            return await ctx.send(embed=embed)
+
+    @commands.hybrid_command()
+    async def atl(self, ctx, new_atl: Optional[float] = None):
+        if (new_atl is not None) and (ctx.author.id in {851524243861536819, 420306546145361922}): #ramana|vacalaranja
+            try:
+                embed = discord.Embed(title='New ATL', description='', color=discord.Color.from_rgb(255,255,255))
+                if new_atl > 1: # USD
+                    self._ath['usd_atl'] = new_atl
+                    self._ath['usd_atl_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New USD ATL:', value=f"{self._ath['usd_atl']}", inline=False)
+                else: # Ratio
+                    self._ath['atl'] = new_atl
+                    self._ath['atl_ts'] = int(datetime.now().timestamp())
+                    embed.add_field(name='New ATL ratio:', value=f"{self._ath['atl']}", inline=False)
+                self.save_ath()
+                embed.set_footer(text='Ramana is keeper of the ATL.')
+                for server_ctx in self.ctx.values(): #send to all servers
+                    await server_ctx.send(embed=embed)
+                return await ctx.send('ATL updated.', ephemeral=True)
+            except ValueError:
+                return await ctx.send('Error updating ATL.', ephemeral=True)
+        else:
+            percent_ratio = (self._ath['ath'] - self._ath['atl'])/ self._ath['ath']
+            percent_usd = (self._ath['usd_ath'] - self._ath['usd_atl']) / self._ath['usd_ath']
+            embed = discord.Embed(title='ATL', description='', color=discord.Color.from_rgb(255,255,255))
+            embed.add_field(name='Current ATL ratio*:', value=f"{self._ath['atl']} (-{percent_ratio:.2%})", inline=False)
+            embed.add_field(name='Last updated ATL ratio:', value=f"<t:{self._ath['atl_ts']}:D>", inline=False)
+            embed.add_field(name='Current USD ATL*:', value=f"{self._ath['usd_atl']} (-{percent_usd:.2%})", inline=False)
+            embed.add_field(name='Last updated USD ATL:', value=f"<t:{self._ath['usd_atl_ts']}:D>", inline=False)
+            embed.set_footer(text='Ramana is keeper of the ATL.\n*Since ATH')
             return await ctx.send(embed=embed)
 
     @commands.command()
@@ -88,6 +156,12 @@ class Unibot(commands.Cog):
     async def update_eur(self, ctx):
         eur = self.cex.request_eur()
         return await ctx.send(f'Updating EUR, new rate is {eur:,.2f}')
+
+    @commands.command()
+    @commands.is_owner()
+    async def update_ath(self, ctx):
+        self.load_ath()
+        return await ctx.send(f'ATH updated.')
 
     @commands.command()
     @commands.is_owner()
@@ -118,6 +192,7 @@ class Unibot(commands.Cog):
             self.latest_ratio = float(self.redis.get('ratio').decode('utf-8'))
             self.latest_eth_price = float(self.redis.get('eth').decode('utf-8'))
             self.latest_reth_ratio = float(self.redis.get('reth').decode('utf-8'))
+            self.latest_wbtc_ratio = float(self.redis.get('wbtc').decode('utf-8'))
             self.last_updated = int(datetime.now().timestamp())
             #print(self.latest_ratio, self.latest_eth_price)
             done = True
@@ -145,35 +220,35 @@ class Unibot(commands.Cog):
             self.redis.set('cex_request', 1)
             self.loop_counter = 0
 
-    @commands.command()
+    @commands.hybrid_command()
     async def collateral(self, ctx):
         #return 1.6 ETH in RPL (10%) and 24 ETH in RPL (150%) collateral rates.
         title = 'Collateral'
         embed = discord.Embed(title=title, description=f'',color=discord.Color.orange())
         embed.add_field(name='8 ETH Minipools\n', value=f'\n', inline=False)
         embed.add_field(name='10% (2.4 ETH)', value=f'{2.4/self.latest_ratio:,.2f} RPL')
-        embed.add_field(name='150% (12 ETH)', value=f'{12/self.latest_ratio:,.2f} RPL')
-        embed.add_field(name='16 ETH Minipools\n', value=f'\n', inline=False)
-        embed.add_field(name='10% (1.6 ETH)', value=f'{1.6/self.latest_ratio:,.2f} RPL')
-        embed.add_field(name='150% (24 ETH)', value=f'{24/self.latest_ratio:,.2f} RPL')
+        embed.add_field(name='15% (3.6 ETH)', value=f'{3.6/self.latest_ratio:,.2f} RPL')
+#        embed.add_field(name='16 ETH Minipools\n', value=f'\n', inline=False)
+#        embed.add_field(name='10% (1.6 ETH)', value=f'{1.6/self.latest_ratio:,.2f} RPL')
+#        embed.add_field(name='150% (24 ETH)', value=f'{24/self.latest_ratio:,.2f} RPL')
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def kraken(self, ctx):
         embed = self.cex.kraken()
         await ctx.send(embed=embed)
 
-    @commands.command()
-    async def coinbase(self, ctx, pair='RPL-USD'):
+    @commands.hybrid_command()
+    async def coinbase(self, ctx, pair: str = 'RPL-USD'):
         embed = self.cex.coinbase(pair)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def dex(self, ctx):
         try:
             url = f'https://api.dev.dex.guru/v1/chain/1/tokens/{self.new_rpl_address}/market'
-            r = requests.get(url, params={'api-key':dex_api_key})
+            r = requests.get(url, params={'api-key':DEX_API_KEY})
             result = json.loads(r.text)
             keys = {"volume_24h": 'Volume',
                 "liquidity": 'Liquidity',
@@ -209,7 +284,7 @@ class Unibot(commands.Cog):
         except:
             return await ctx.send('Too many requests')
 
-    @commands.command()
+    @commands.hybrid_command()
     async def jam(self, ctx):
         today = datetime.today().date()
         if today.month == 4 and today.day == 1:
@@ -229,11 +304,11 @@ class Unibot(commands.Cog):
             video = 'https://www.youtube.com/watch?v=Wmo_XbLjVZs' #jam
         return await ctx.send(video)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def catjam(self, ctx):
         return await ctx.send('https://www.youtube.com/watch?v=a9f8rxdpmb0')
 
-    @commands.command()
+    @commands.hybrid_command()
     async def ratio(self, ctx):
         #print('ratio')
         if self.disable:
@@ -247,11 +322,12 @@ class Unibot(commands.Cog):
         embed.add_field(name='RPL/USD', value=f'${usd_price:,.3f}')
         embed.add_field(name='ETH/USD', value=f'${self.latest_eth_price:,.2f}')
         embed.add_field(name='rETH/ETH', value=f'{self.latest_reth_ratio:,.5f}')
+        embed.add_field(name='ETH/WBTC', value=f'{self.latest_wbtc_ratio:,.7f}')
         embed.add_field(name='Last Updated', value=f'<t:{timestamp}>')
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def smoigel(self, ctx):
         if self.disable:
             return await ctx.send('too many requests')
@@ -270,13 +346,16 @@ class Unibot(commands.Cog):
         embed.set_footer(text=f'{AUTHOR} {ADDRESS}', icon_url=ICON)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def rpit(self, ctx):
         if self.disable:
             return await ctx.send('too many requests')
         self.disable = True
         title = "Rocket Pool Investment Theses"
         embed = discord.Embed(title=title, description='',color=discord.Color.orange())
+
+        embed.add_field(name="Tokenomics rework", value='[RPIP-49](https://rpips.rocketpool.net/RPIPs/RPIP-49)', inline=False)
+
         embed.add_field(name="Xer0's RPIT 1.0", value='[Reddit link](https://www.reddit.com/r/ethfinance/comments/m3pug8/the_rocket_pool_investment_thesis/)')
         embed.add_field(name="Xer0's RPIT 2.0", value= '[Reddit link](https://www.reddit.com/r/ethfinance/comments/qwbb8w/rocket_pool_investment_thesis_20/)')
         embed.add_field(name="Boodle's RPIT 3.0", value= '[Reddit link](https://www.reddit.com/r/ethfinance/comments/m4jj0i/rocketpool_investment_thesis_round_3/)', inline=False)
@@ -296,15 +375,15 @@ class Unibot(commands.Cog):
         embed.add_field(name="Hanniabu's Theses Collection", value= '[Community site](https://fervent-curie-5c2bfc.netlify.app/thesis/)', inline=False)
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def stop(self, ctx):
         return await ctx.send('Hammer time!')
 
-    @commands.command()
+    @commands.hybrid_command()
     async def waqboard(self, ctx):
         return await ctx.send('https://docs.google.com/spreadsheets/d/18T5w_w9uf6eOy5tt3GDNLFjNp7pr__1Z9IaW4RBCAQY/')
 
-    @commands.command()
+    @commands.hybrid_command()
     async def wen(self, ctx):
         now = datetime.now()
         answers = ['In the not-too-distant future.', 'Yesterday.', 'Tonight.',
@@ -314,12 +393,15 @@ class Unibot(commands.Cog):
                 "I'd rather you /rpit'd me", r'¯\_(ツ)_/¯', 'DO IT!', 'Ask the folks in #trading, they know this kind of stuff',
                 'Why are you still here? Go check your grafana.', "Before Maker, that's for sure...",
                 'Not right now, Kron is watching.', 'Why are you asking me? Ask Joe!', "After we complete Vitalik's roadmap",
-                'Let me call Vitalik for you.', 'A long time ago.', 'Soon.', 'Very soon.', 'Need to finish audits first.', 'After $10k ETH.', 'After $1k RPL.']
+                'Let me call Vitalik for you.', 'A long time ago.', 'Soon.', 'Very soon.', 'Need to finish audits first.', 'After $10k ETH.', 'After $1k RPL.',
+                'Next last time to buy RPL below $20.', 'Next last time to buy ETH below $2k.', 'Right before a 500 ETH Smoothing Pool proposal.',
+                'After ETH Denver.', 'After Solana flippening.', 'After MEEK initializes their vote power.',
+                'Next time haloo gets banned']
         msg = choice(answers)
         print(msg, now)
         return await ctx.send(msg)
 
-    @commands.command()
+    @commands.hybrid_command()
     async def when(self, ctx):
         embed = discord.Embed(title='When?', description='', color=discord.Color.from_rgb(255,150,150))
         #embed.add_field(name='First rewards period start', value='<t:1637818539>', inline=False) #1635399339 + 28×86400
@@ -328,9 +410,12 @@ class Unibot(commands.Cog):
         period = (28 * 86400)
         n = floor((ts - start)/period)
         period_ts = start + (period * n)
+        period_n = n - 7
+        #houston = 1718580600
         next_period_ts = start + (period * (n + 1))
-        embed.add_field(name='Current rewards period start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
-        embed.add_field(name='Next rewards period start', value=f'<t:{next_period_ts}>(<t:{next_period_ts}:R>)', inline=False)
+        embed.add_field(name=f'Rewards period {period_n} start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
+        embed.add_field(name=f'Rewards period {period_n + 1} start', value=f'<t:{next_period_ts}>(<t:{next_period_ts}:R>)', inline=False)
+        #embed.add_field(name='Houston upgrade livestream\nhttps://www.youtube.com/live/OnA3a2z8FJU', value=f'<t:{houston}>(<t:{houston}:R>)', inline=False)
         embed.set_footer(text='All dates are displayed in your local timezone.')
         return await ctx.send(embed=embed)
 
@@ -340,11 +425,18 @@ async def shutdown(ctx):
     unibot.remove_ctx(ctx)
     print('removed from ', ctx.guild)
 
-@client.event
-async def on_ready():
-  print('We have logged in as {0.user}'.format(client))
+@bot.event
+async def setup_hook():
+    await bot.add_cog(unibot)
 
-@bot.command()
+@bot.event
+async def on_ready():
+    print(f'We have logged in as {bot.user}')
+    await bot.tree.sync()
+    for guild in bot.guilds:
+        await bot.tree.sync(guild=guild)
+
+@bot.hybrid_command()
 async def author(ctx):
     await ctx.send(f'{AUTHOR} {ADDRESS}')
 
@@ -356,5 +448,4 @@ async def start(ctx):
     unibot.add_ctx(ctx)
 
 unibot = Unibot(bot)
-bot.add_cog(unibot)
 bot.run(discord_bot_key)
