@@ -48,8 +48,8 @@ class Requester():
             #print('done')
             if self.redis.get('cex_request'):
                 #print('getting cex swaps')
-                #self.get_coinbase_swaps()
-                #self.get_kraken_swaps()
+                self.get_coinbase_swaps()
+                self.get_kraken_swaps()
                 self.redis.delete('cex_request')
                 #print('done')
             await asyncio.sleep(60)

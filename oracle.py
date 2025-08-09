@@ -36,6 +36,7 @@ class Oracle():
                       'Authorization': f'Bearer {oneinch_api_key}'}
             r = requests.get(url, params=params, headers=headers)
             d = json.loads(r.text)
+            print(d[address])
             if usd:
                 return float(d[address])
             else:
@@ -54,6 +55,7 @@ class Oracle():
             else:
                 ratio = self.oracle.functions.getRateToEth(address, True).call()
                 ratio = ratio/10**18
+            print(ratio)
             return ratio
 
     def get_usd_price(self, address):
@@ -61,7 +63,9 @@ class Oracle():
         return price
 
     async def loop(self):
+        n = 0
         while True:
+            n += 1
             #print('getting swaps')
             try:
                 ratio = self.get_ratio(self.new_rpl_address)
@@ -81,8 +85,8 @@ class Oracle():
                 self.redis.set('wbtc', wbtc_ratio)
             except:
                 print('Error')
-                raise
-            await asyncio.sleep(60)
+            print(n)
+            await asyncio.sleep(120)
 
 if __name__ == '__main__':
     oracle = Oracle()
