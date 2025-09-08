@@ -135,7 +135,8 @@ class Unibot(commands.Cog):
                 self.save_ath()
                 embed.set_footer(text='Ramana is keeper of the ATL.')
                 for server_ctx in self.ctx.values(): #send to all servers
-                    await server_ctx.send(embed=embed)
+                    if server_ctx.channel.id != 405163713063288832:
+                        await server_ctx.send(embed=embed)
                 return await ctx.send('ATL updated.', ephemeral=True)
             except ValueError:
                 return await ctx.send('Error updating ATL.', ephemeral=True)
