@@ -36,7 +36,7 @@ class Oracle():
                       'Authorization': f'Bearer {oneinch_api_key}'}
             r = requests.get(url, params=params, headers=headers)
             d = json.loads(r.text)
-            print(d[address])
+            print(d, d[address])
             if usd:
                 return float(d[address])
             else:
@@ -80,8 +80,8 @@ class Oracle():
                 await asyncio.sleep(2)
                 reth_ratio = self.get_ratio(self.reth_address)
                 self.redis.set('reth', reth_ratio)
-                wbtc_ratio = self.get_ratio(self.wbtc_address)
-                wbtc_ratio = 10**10/wbtc_ratio
+                wbtc_ratio = self.get_ratio(self.wbtc_address, usd=True)
+                wbtc_ratio = eth_price/wbtc_ratio
                 self.redis.set('wbtc', wbtc_ratio)
             except:
                 print('Error')

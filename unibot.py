@@ -395,11 +395,11 @@ class Unibot(commands.Cog):
                 'What are you waiting for?', 'You may stake now, my liege.',
                 'As soon as gas goes down.', 'There is no better time than now.',
                 "I'd rather you /rpit'd me", r'¯\_(ツ)_/¯', 'DO IT!', 'Ask the folks in #trading, they know this kind of stuff',
-                'Why are you still here? Go check your grafana.', "Before Maker, that's for sure...",
+                'Why are you still here? Go check your grafana.',
                 'Not right now, Kron is watching.', 'Why are you asking me? Ask Joe!', "After we complete Vitalik's roadmap",
                 'Let me call Vitalik for you.', 'A long time ago.', 'Soon.', 'Very soon.', 'Need to finish audits first.', 'After $10k ETH.', 'After $1k RPL.',
                 'Next last time to buy RPL below $20.', 'Next last time to buy ETH below $2k.', 'Right before a 500 ETH Smoothing Pool proposal.',
-                'After ETH Denver.', 'After Solana flippening.', 'After MEEK initializes their vote power.',
+                'After ETH Denver.', 'After Solana flippening.', 'Never',
                 'Next time haloo gets banned']
         msg = choice(answers)
         print(msg, now)
@@ -418,7 +418,7 @@ class Unibot(commands.Cog):
         #houston = 1718580600
         saturn = 1771372800
         next_period_ts = start + (period * (n + 1))
-        embed.add_field(name='Saturn 1 Launch\nhttp://saturn.rocketpool.net/', value=f'<t:{saturn}>(<t:{saturn}:R>)', inline=False)
+        #embed.add_field(name='Saturn 1 Launch\nhttp://saturn.rocketpool.net/', value=f'<t:{saturn}>(<t:{saturn}:R>)', inline=False)
         embed.add_field(name=f'Rewards period {period_n} start', value=f'<t:{period_ts}>(<t:{period_ts}:R>)', inline=False)
         embed.add_field(name=f'Rewards period {period_n + 1} start', value=f'<t:{next_period_ts}>(<t:{next_period_ts}:R>)', inline=False)
         embed.set_footer(text='All dates are displayed in your local timezone.')
